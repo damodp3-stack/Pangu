@@ -3,11 +3,14 @@ const path = require('path');
 const fs = require('fs');
 
 class PanguMemory {
-  constructor(dbPath) {
+  constructor(dbPath, cryptoOptions = {}) {
     const dataDir = path.dirname(dbPath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
+
+    this.encryptFn = (typeof cryptoOptions.encrypt === 'function') ? cryptoOptions.encrypt : ((plain) => plain);
+    this.decryptFn = (typeof cryptoOptions.decrypt === 'function') ? cryptoOptions.decrypt : ((cipher) => cipher);
 
     this.db = new Database(dbPath);
 
@@ -233,8 +236,11 @@ class PanguMemory {
   }
 
   addXp(amount) {
+    const parsedAmount = typeof amount === 'number' && !isNaN(amount) && isFinite(amount)
+      ? Math.min(1000, Math.max(1, Math.floor(amount)))
+      : 10;
     const stats = this.getPetStats();
-    let currentXp = (stats.xp || 0) + Math.max(1, amount);
+    let currentXp = (stats.xp || 0) + parsedAmount;
     let currentLevel = stats.level || 1;
     let leveledUp = false;
     const oldLevel = currentLevel;
@@ -284,17 +290,53 @@ class PanguMemory {
     return this.getPetStats();
   }
 
-  // API Keys
+  // API Keys (Encrypted at rest)
   getApiKey(provider = 'gemini') {
-    return this.stmts.getApiKey.get(provider);
+    const row = this.stmts.getApiKey.get(provider);
+    if (!row) return null;
+    let decrypted = row.api_key;
+    if (row.api_key) {
+      try {
+        decrypted = this.decryptFn(row.api_key);
+      } catch (err) {
+        console.warn(`[PanguMemory] Could not decrypt key for ${provider}:`, err.message);
+      }
+    }
+    return {
+      ...row,
+      api_key: decrypted
+    };
   }
 
   setApiKey(provider, apiKey, model = '') {
-    this.stmts.setApiKey.run(provider, apiKey, model);
+    const cleanKey = (apiKey || '').trim();
+    let storedKey = cleanKey;
+    if (cleanKey) {
+      storedKey = this.encryptFn(cleanKey);
+    }
+    this.stmts.setApiKey.run(provider, storedKey, model);
+  }
+
+  clearAllApiKeys() {
+    this.db.prepare('DELETE FROM api_keys').run();
   }
 
   getAllApiKeys() {
-    return this.stmts.getAllApiKeys.all();
+    const rows = this.stmts.getAllApiKeys.all();
+    return rows.map((r) => {
+      let rawKey = '';
+      try {
+        const full = this.stmts.getApiKey.get(r.provider);
+        rawKey = full && full.api_key ? this.decryptFn(full.api_key) : '';
+      } catch (e) {}
+      const masked = rawKey && rawKey.length > 4 ? rawKey.slice(0, 4) + '...' : (rawKey ? '••••' : '');
+      return {
+        provider: r.provider,
+        model: r.model,
+        is_active: r.is_active,
+        masked_key: masked
+      };
+    });
   }
 
   close() {

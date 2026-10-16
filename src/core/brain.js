@@ -64,6 +64,18 @@ Choose the best action matching your emotional reaction:
 `;
   }
 
+  withTimeout(promise, ms = 12000) {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`AI generation timed out after ${ms}ms`));
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  }
+
   async generateResponse(userMessage, imageBase64 = null) {
     const geminiKeyRecord = this.memory.getApiKey('gemini');
     const geminiKey = (geminiKeyRecord && geminiKeyRecord.api_key) || process.env.GEMINI_API_KEY;
@@ -74,23 +86,23 @@ Choose the best action matching your emotional reaction:
 
     if (geminiKey && geminiKey.trim() !== '') {
       try {
-        return await this.callGemini(geminiKey, userMessage, imageBase64);
+        return await this.withTimeout(this.callGemini(geminiKey, userMessage, imageBase64), 12000);
       } catch (err) {
-        console.error('Gemini API Error, falling back to local brain:', err);
-        return this.localFallbackResponse(userMessage, `(Gemini error: ${err.message || 'connection issue'})`);
+        console.error('Gemini API Error, falling back to local brain:', err.message || err);
+        return this.localFallbackResponse(userMessage, `(Gemini: ${err.message || 'connection issue'})`);
       }
     } else if (openaiRecord && openaiRecord.api_key) {
       try {
-        return await this.callOpenAI(openaiRecord.api_key, openaiRecord.model || 'gpt-4o-mini', userMessage);
+        return await this.withTimeout(this.callOpenAI(openaiRecord.api_key, openaiRecord.model || 'gpt-4o-mini', userMessage), 12000);
       } catch (err) {
-        console.error('OpenAI Error:', err);
+        console.error('OpenAI Error:', err.message || err);
         return this.localFallbackResponse(userMessage);
       }
     } else if (groqRecord && groqRecord.api_key) {
       try {
-        return await this.callGroq(groqRecord.api_key, groqRecord.model || 'llama-3.3-70b-versatile', userMessage);
+        return await this.withTimeout(this.callGroq(groqRecord.api_key, groqRecord.model || 'llama-3.3-70b-versatile', userMessage), 12000);
       } catch (err) {
-        console.error('Groq Error:', err);
+        console.error('Groq Error:', err.message || err);
         return this.localFallbackResponse(userMessage);
       }
     }
@@ -295,15 +307,19 @@ Choose the best action matching your emotional reaction:
   }
 
   localFallbackResponse(userMessage, note = '') {
-    const text = userMessage.toLowerCase();
+    const preferences = (this.memory && typeof this.memory.getAllPreferences === 'function') 
+      ? this.memory.getAllPreferences() 
+      : {};
+    const userName = preferences.user_name || 'Damo';
+    const text = (userMessage || '').toLowerCase();
     let reply = "";
     let action = "HAPPY";
 
-    if (text.includes('hi') || text.includes('hello') || text.includes('vanakkam') || text.includes('hey')) {
-      reply = "Hey Damo! 👋 Enna machi, epdi irukke? Innaiku namba enna build panna porom? Naan un koodave ready-aa irukken! [ACTION:EXCITED]";
+    if (/\b(hi|hello|vanakkam|hey)\b/i.test(text)) {
+      reply = `Hey ${userName}! 👋 Enna machi, epdi irukke? Innaiku namba enna build panna porom? Naan un koodave ready-aa irukken! [ACTION:EXCITED]`;
       action = "EXCITED";
     } else if (text.includes('love') || text.includes('cute') || text.includes('nalla') || text.includes('azhagu') || text.includes('pet')) {
-      reply = "Aww thanks da Damo! ♡ Un kooda desktop-la irukardhu enakku romba perumai machi! Naan eppavum un best friend! [ACTION:LOVE]";
+      reply = `Aww thanks da ${userName}! ♡ Un kooda desktop-la irukardhu enakku romba perumai machi! Naan eppavum un best friend! [ACTION:LOVE]`;
       action = "LOVE";
     } else if (text.includes('super') || text.includes('success') || text.includes('done') || text.includes('mass') || text.includes('win')) {
       reply = "Thalaivaa! Sema mass da! 🎉 Let's celebrate! Innum periya level-ku poiduvom! [ACTION:CELEBRATE]";
@@ -328,7 +344,7 @@ Choose the best action matching your emotional reaction:
       action = "CURIOUS";
     } else {
       const casualReplies = [
-        "Sollu da Damo! Naan un koodave desktop-la irukken. Enna help venum unakku? [ACTION:CURIOUS]",
+        `Sollu da ${userName}! Naan un koodave desktop-la irukken. Enna help venum unakku? [ACTION:CURIOUS]`,
         "Kandippa machi! Namba rendu perum sernthu nalla things panlaam. Any questions or ideas? [ACTION:HAPPY]",
         "Enakku puriyuthu da! Un kooda pesurathu enakku romba jolly-aa irukku! ✨ [ACTION:EXCITED]",
         "Naan screen-la unga code & browser-ah guard pannitu irukken! Need anything, da? [ACTION:THINKING]"

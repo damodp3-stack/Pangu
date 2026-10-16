@@ -1,4 +1,12 @@
 class PrivacyManager {
+  static canUseScreenVision(privacyManager) {
+    return Boolean(
+      privacyManager &&
+      typeof privacyManager.canCaptureScreen === 'function' &&
+      privacyManager.canCaptureScreen()
+    );
+  }
+
   constructor(memory, onPanicToggle = () => {}) {
     this.memory = memory;
     this.onPanicToggle = onPanicToggle;
@@ -27,6 +35,12 @@ class PrivacyManager {
     return this.getPrivacyStatus();
   }
 
+  canCaptureScreen() {
+    if (this.isPaused) return false;
+    const prefs = this.memory.getAllPreferences();
+    return prefs.screen_permission === 'true';
+  }
+
   wipeAllData() {
     this.memory.clearChatHistory();
     // Mark memories as inactive
@@ -34,7 +48,10 @@ class PrivacyManager {
     for (const m of memories) {
       this.memory.deleteMemory(m.id);
     }
-    return { success: true, message: 'All local chat history and memories have been wiped.' };
+    if (typeof this.memory.clearAllApiKeys === 'function') {
+      this.memory.clearAllApiKeys();
+    }
+    return { success: true, message: 'All local chat history, memories, and stored credentials have been wiped.' };
   }
 }
 

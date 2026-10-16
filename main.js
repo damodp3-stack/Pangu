@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, Tray, Menu, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, Tray, Menu, desktopCapturer, safeStorage, shell } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 
@@ -13,6 +13,39 @@ const PanguMemory = require('./src/core/memory');
 const PanguBrain = require('./src/core/brain');
 const PetStateMachine = require('./src/core/pet_state');
 const PrivacyManager = require('./src/core/privacy');
+
+// Secure DPAPI Credential Helper
+const cryptoHelper = {
+  encrypt: (plainText) => {
+    if (!plainText) return '';
+    if (safeStorage && safeStorage.isEncryptionAvailable()) {
+      try {
+        return 'enc_dpapi:' + safeStorage.encryptString(plainText).toString('base64');
+      } catch (err) {
+        console.warn('[PanguMain] DPAPI encryption warning:', err.message);
+        throw new Error('Secure API key storage is unavailable');
+      }
+    }
+    throw new Error('Secure API key storage is unavailable');
+  },
+  decrypt: (storedText) => {
+    if (!storedText) return '';
+    if (storedText.startsWith('enc_dpapi:')) {
+      if (safeStorage && safeStorage.isEncryptionAvailable()) {
+        try {
+          const buf = Buffer.from(storedText.slice(10), 'base64');
+          return safeStorage.decryptString(buf);
+        } catch (err) {
+          console.warn('[PanguMain] DPAPI decryption warning:', err.message);
+          return '';
+        }
+      }
+      console.warn('[PanguMain] DPAPI not available to decrypt key');
+      return '';
+    }
+    return storedText; // Fallback legacy plaintext
+  }
+};
 
 let mainWindow = null;
 let tray = null;
@@ -98,6 +131,21 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'ui', 'index.html'));
 
+  // Security Hardening: Never open untrusted external URLs in Electron window
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https:') || url.startsWith('http:')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file:')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
     console.log(`[Renderer Line ${line}] ${message}`);
   });
@@ -141,9 +189,9 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
 
 // App lifecycle
 app.whenReady().then(() => {
-  // Initialize Core Systems
+  // Initialize Core Systems with Windows DPAPI encryption
   const dbPath = path.join(__dirname, 'data', 'pangu_memory.db');
-  memory = new PanguMemory(dbPath);
+  memory = new PanguMemory(dbPath, cryptoHelper);
   brain = new PanguBrain(memory);
 
   petState = new PetStateMachine(
@@ -185,11 +233,16 @@ function setupIpcHandlers() {
       return { text: "Pangu is currently paused (Emergency Privacy Mode). Press Ctrl+Shift+P to resume!", action: "SLEEPY" };
     }
 
+    if (typeof message !== 'string' || !message.trim()) {
+      return { text: "Puriyala da machi, konjam clear-aa sollunga!", action: "CURIOUS" };
+    }
+    const cleanMsg = message.trim().slice(0, 2000);
+
     // Save user chat
-    memory.addChatMessage('user', message);
+    memory.addChatMessage('user', cleanMsg);
 
     // Generate AI response
-    const result = await brain.generateResponse(message);
+    const result = await brain.generateResponse(cleanMsg);
 
     // Save Pangu chat
     memory.addChatMessage('pangu', result.text);
@@ -231,19 +284,34 @@ function setupIpcHandlers() {
     }
   }
 
-  // Screen Capture IPC for Multimodal Vision
+  // Screen Capture IPC for Multimodal Vision (Strict Permission Gated)
   ipcMain.handle('screen:capture', async () => {
+    if (!privacy || !privacy.canCaptureScreen()) {
+      return null;
+    }
     return await captureActiveScreen();
   });
 
   // Multimodal Screen Vision Chat IPC (Supports screen capture OR directly dropped images)
   ipcMain.handle('chat:send-vision', async (event, message, customB64 = null) => {
-    if (privacy && privacy.isPaused) {
-      return { text: "Pangu is paused (Emergency Privacy Mode). Press Ctrl+Shift+P to resume!", action: "SLEEPY" };
+    if (!PrivacyManager.canUseScreenVision(privacy)) {
+      if (privacy && privacy.isPaused) {
+        return { text: "Pangu is paused (Emergency Privacy Mode). Press Ctrl+Shift+P to resume!", action: "SLEEPY" };
+      }
+      return {
+        text: "Screen capture permission disabled in settings, da! Settings-la 'Screen Vision Permission' enable pannunga.",
+        action: "CURIOUS"
+      };
     }
 
     const imageB64 = customB64 || await captureActiveScreen();
-    const query = message && message.trim() !== '' ? message : "Screen-a check pannitu enna seiyanum nu sollu, da!";
+    if (!imageB64) {
+      return { text: "Screen capture eduka mudiyala da. Konjam screen permission check pannunga!", action: "CURIOUS" };
+    }
+
+    const query = typeof message === 'string' && message.trim() !== '' 
+      ? message.trim().slice(0, 2000) 
+      : "Screen-a check pannitu enna seiyanum nu sollu, da!";
     memory.addChatMessage('user', `[👀 Vision Look] ${query}`);
 
     const result = await brain.generateResponse(query, imageB64);
@@ -291,11 +359,17 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('memory:add', (event, category, content) => {
-    return memory.addMemory(category, content);
+    if (typeof category !== 'string' || typeof content !== 'string') return null;
+    const cleanCat = category.trim().slice(0, 50);
+    const cleanContent = content.trim().slice(0, 1000);
+    if (!cleanCat || !cleanContent) return null;
+    return memory.addMemory(cleanCat, cleanContent);
   });
 
   ipcMain.handle('memory:delete', (event, id) => {
-    memory.deleteMemory(id);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId) || parsedId <= 0) return false;
+    memory.deleteMemory(parsedId);
     return true;
   });
 
@@ -303,8 +377,17 @@ function setupIpcHandlers() {
     return memory.getAllPreferences();
   });
 
+  const ALLOWED_PREFS = new Set([
+    'user_name', 'theme', 'language_preference', 'sound_enabled',
+    'activity_level', 'screen_permission', 'mic_permission', 'camera_permission',
+    'character', 'voice_mode', 'celestial_wings'
+  ]);
+
   ipcMain.handle('preferences:set', (event, key, value) => {
-    memory.setPreference(key, value);
+    if (typeof key !== 'string' || !ALLOWED_PREFS.has(key)) return false;
+    if (typeof value !== 'string' && typeof value !== 'boolean' && typeof value !== 'number') return false;
+    const safeVal = String(value).slice(0, 500);
+    memory.setPreference(key, safeVal);
     return true;
   });
 
@@ -330,6 +413,9 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('pet:add-xp', (event, amount) => {
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0 || amount > 1000) {
+      return memory.getPetStats();
+    }
     const res = memory.addXp(amount);
     if (res.leveledUp) {
       sendToRenderer('pet:level-up', res);
@@ -338,7 +424,9 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('pet:set-aura', (event, aura) => {
-    return memory.setElementalAura(aura);
+    const validAuras = new Set(['fire', 'thunder', 'frost', 'void']);
+    const safeAura = validAuras.has(aura) ? aura : 'fire';
+    return memory.setElementalAura(safeAura);
   });
 
   // API Keys IPC
@@ -347,8 +435,17 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('api-keys:save', (event, provider, key, model) => {
-    memory.setApiKey(provider, key, model);
-    return true;
+    const validProviders = new Set(['gemini', 'openai', 'groq']);
+    if (!validProviders.has(provider)) return false;
+    if (typeof key !== 'string' || key.length > 512) return false;
+    const safeModel = typeof model === 'string' ? model.slice(0, 100) : '';
+    try {
+      memory.setApiKey(provider, key.trim(), safeModel);
+      return true;
+    } catch (err) {
+      console.warn('[PanguMain] API key could not be stored securely:', err.message);
+      return false;
+    }
   });
 
   // Privacy IPC
@@ -361,7 +458,9 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('privacy:setPermission', (event, key, allowed) => {
-    return privacy.setPermission(key, allowed);
+    const validPermissionKeys = new Set(['screen_permission', 'mic_permission', 'camera_permission']);
+    if (!validPermissionKeys.has(key)) return privacy.getPrivacyStatus();
+    return privacy.setPermission(key, !!allowed);
   });
 
   ipcMain.handle('privacy:wipe', () => {
