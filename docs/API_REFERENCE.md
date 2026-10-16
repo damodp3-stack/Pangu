@@ -29,13 +29,15 @@ panguAPI.sendMessage(message: string): Promise<{ text: string, action: string }>
 panguAPI.sendVisionMessage(message: string, customBase64?: string): Promise<{ text: string, action: string }>
 ```
 - Analyzes an image with Google Gemini Multimodal Vision.
-- If `customBase64` is provided (e.g. from drag & drop), it analyzes that file.
+- **Privacy Gated:** Requires both `screen_permission === 'true'` and `isPaused === false`. All vision requests (including caller-supplied `customBase64` or dropped files) are blocked if permission is disabled or emergency panic is active.
+- If `customBase64` is provided (e.g. from drag & drop), it analyzes that image buffer.
 - If omitted, captures the active screen monitor nearest the user cursor.
 
 ```typescript
 panguAPI.captureScreen(): Promise<string | null>
 ```
 - Captures the active monitor and returns a JPEG base64 string.
+- Returns `null` immediately if screen permission is not granted or if emergency panic mode is active.
 
 ```typescript
 panguAPI.getChatHistory(): Promise<Array<{ role: string, content: string, timestamp: string }>>
@@ -171,15 +173,18 @@ CREATE INDEX idx_memories_active ON memories(is_active);
 ```
 
 ### 5. `api_keys`
-Securely stores provider API keys:
+Stores provider credentials encrypted at rest using Windows DPAPI via Electron's `safeStorage`:
 ```sql
 CREATE TABLE api_keys (
   provider TEXT PRIMARY KEY,
-  api_key TEXT,
+  api_key TEXT,               -- Stored as 'enc_dpapi:<base64>' cipher
   model TEXT,
   is_active INTEGER DEFAULT 0
 );
 ```
+- **Fail-Closed Encryption:** If `safeStorage` is unavailable, key saves fail closed to prevent accidental plaintext leaks.
+- **Backward Compatibility:** Legacy plaintext keys in pre-existing databases remain readable.
+- **Masking:** `getAllApiKeys()` masks keys (e.g. `AIza...`) before sending to renderer.
 
 ---
 

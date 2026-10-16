@@ -81,7 +81,15 @@ npm install
 To enable cloud intelligence and screen vision:
 1. Obtain a free key from [Google AI Studio](https://aistudio.google.com).
 2. Right-click Pangu -> **⚙️ Settings & API Key** -> Paste key -> **Save**.
-*(Or copy `.env.example` to `.env` and configure `GEMINI_API_KEY`)*
+### 4. Running Automated Tests
+Run the verified 23-test regression suite:
+```bash
+npm test
+```
+To run the full headless Electron smoke verification:
+```bash
+npm run test:smoke
+```
 
 ---
 
@@ -90,8 +98,8 @@ To enable cloud intelligence and screen vision:
 | Shortcut | Description |
 | :--- | :--- |
 | **`Spacebar`** | Open floating dialogue pill beside Pangu |
-| **`Ctrl + Shift + S`** | Quick screen inspection (inspects active monitor) |
-| **`Ctrl + Shift + P`** | **Emergency Privacy Switch** (instantly freeze Pangu) |
+| **`Ctrl + Shift + S`** | Quick screen inspection (requires screen permission) |
+| **`Ctrl + Shift + P`** | **Emergency Privacy Switch** (instantly freeze Pangu & block all vision/cloud) |
 | **`L`** | Toggle Red Laser Chase mini-game |
 | **`B`** | Toss Bouncy Toy Ball across desktop |
 | **`Tab`** | Jump to Next Monitor *(if multi-monitor connected)* |
@@ -106,17 +114,22 @@ To enable cloud intelligence and screen vision:
 
 ```
 Pangu/
-├── main.js                  # Electron Main Process (Window, IPC, Capturer)
+├── main.js                  # Electron Main Process (Window, DPAPI Crypto, IPC Security)
 ├── preload.js               # Secure ContextBridge isolation bridge
 ├── run_pangu.bat            # 1-Click Windows execution script
 ├── package.json             # NPM package scripts and dependencies
 ├── LICENSE                  # MIT License
 ├── CONTRIBUTING.md          # Open-source contribution guidelines
+├── tests/                   # 23 Automated unit & regression test suites
+│   ├── brain.test.js        # AI prompt, history normalization & timeout tests
+│   ├── memory.test.js       # SQLite persistence, DPAPI encryption & XP bounds
+│   ├── pet_state.test.js    # State machine and activity logic tests
+│   └── privacy.test.js      # Panic toggle and permission gating tests
 ├── docs/                    # Complete architectural and API documentation
-│   ├── ARCHITECTURE.md      # Detailed system blueprints & diagrams
+│   ├── ARCHITECTURE.md      # Detailed system blueprints & security architecture
 │   ├── USER_GUIDE.md        # Comprehensive user manual
 │   ├── API_REFERENCE.md     # IPC methods & database schemas
-│   └── DEVELOPMENT.md       # Developer setup & asset rigging handbook
+│   └── DEVELOPMENT.md       # Developer setup, testing & asset rigging handbook
 ├── src/
 │   ├── core/                # Brain, SQLite memory, state machines, privacy
 │   ├── legacy/              # Archived early 2D canvas engine
@@ -126,11 +139,14 @@ Pangu/
 
 ---
 
-## 🛡️ Privacy & Local-First Philosophy
+## 🛡️ Privacy & Local-First Security Architecture
 
-- **Private Local Storage:** Your chat logs, preferences, and RPG achievements are saved locally in SQLite (`data/pangu_memory.db`).
-- **No Background Telemetry:** Pangu only performs vision lookups when explicitly requested by you (`Ctrl+Shift+S` or dropping a file).
-- **Emergency Kill Switch:** Pressing **`Ctrl + Shift + P`** freezes Pangu instantly.
+- **Windows DPAPI Credential Encryption:** API keys are encrypted at rest using Electron's `safeStorage` (backed by Windows Data Protection API). Fails closed if secure storage is unavailable; keys are never stored in plaintext.
+- **Permission-Gated Screen Vision:** All vision requests (auto-captured or dropped images) require explicit user permission and are strictly blocked when privacy pause is active.
+- **Strict IPC Sanitization:** All IPC channels are strictly bounded, validating integers, permitted keys, and input lengths to prevent memory corruption or XP injection.
+- **Navigation Security:** External links are forced to open in the OS default browser via `shell.openExternal`, preventing Electron window hijacking.
+- **Private Local Storage:** Chat logs, preferences, and RPG achievements remain 100% on your machine in SQLite (`data/pangu_memory.db`).
+- **Emergency Kill Switch:** Pressing **`Ctrl + Shift + P`** halts all companion activity, audio, rendering, and API calls instantly.
 
 ---
 

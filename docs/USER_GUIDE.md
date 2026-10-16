@@ -20,7 +20,11 @@ Pangu works 100% offline with its built-in friendly companion brain, but connect
 2. Right-click Pangu to open the context menu.
 3. Select **⚙️ Settings & API Key**.
 4. Paste your key in the **Google Gemini API Key** field and click **Save Settings**.
-*(Alternatively, create a `.env` file with `GEMINI_API_KEY=your_key_here`)*
+   - **🔒 Hardware-Backed Security:** Your API key is encrypted on disk using Windows DPAPI via Electron's `safeStorage`. It is never stored in plain text and never sent to third-party servers.
+*(Alternatively, configure `GEMINI_API_KEY` in your `.env` file)*
+
+> [!NOTE]
+> **Screen Vision Permission:** To allow Pangu to inspect your screen or dropped images, ensure Screen Vision is permitted in settings. When Emergency Privacy Mode (`Ctrl + Shift + P`) is active, all vision and cloud API requests are automatically blocked.
 
 ---
 

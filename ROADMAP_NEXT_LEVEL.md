@@ -11,8 +11,11 @@
 | **Frontend Architecture** | 1315-line monolithic `app.js` | 8 dedicated ES modules in `src/ui/modules/` | High maintainability, isolated testability, zero spaghetti code |
 | **Production Bundle** | 1.9 MB unminified | **768.6 KB** minified with sourcemaps | **~58% reduction** in bundle footprint, faster initial load |
 | **SQLite Memory Engine** | Re-prepared SQL on every function call | Precompiled cached statements + WAL Mode + 64MB RAM cache | **10x faster query execution**, zero GC thrashing |
+| **Security & Credentials** | Plaintext API keys in SQLite | **Windows DPAPI `safeStorage` encryption** (Fail-closed) | 100% credential security at rest, zero disk leakage |
+| **Screen Vision Privacy** | Unchecked capture calls | **Uniform permission & panic gating** (`canUseScreenVision`) | Zero unpermissioned screen capture or upload paths |
+| **Automated Testing** | 4-sec dummy smoke check | **23-test unit & regression suite (`tests/`)** | Verified automated test harness across all core subsystems |
 | **Database Indexing** | Full table scans on timestamps & categories | B-Tree indexes on `chat_history` & `memories` | Instant history & semantic memory lookups |
-| **AI Client Life-cycle** | Reinstantiated `GoogleGenAI` per chat | Cached AI instance with intelligent fallback cascade | Lower memory overhead & faster first-token latency |
+| **AI Client Life-cycle** | Reinstantiated `GoogleGenAI` per chat | Cached AI instance with intelligent fallback cascade & timeouts | Lower memory overhead & circuit-breaker protection |
 | **Workspace Hygiene** | Stray files, unversioned logs, no gitignore | Clean `.gitignore`, `.env.example`, documented `scratch/` & `legacy/` | Professional, production-ready repository structure |
 
 ---

@@ -10,16 +10,23 @@ This guide details the internal developer workflow, bundling system, 3D model ri
 - `npm run build`: Bundles `src/ui/components/app.js` and all dependencies into `src/ui/dist/bundle.js` using `esbuild`.
 - `npm run build:prod`: Generates minified production bundle with sourcemap.
 - `npm start`: Runs `npm run build` and launches the Electron application.
-- `npm test`: Runs automated headless end-to-end verification via Electron.
+- `npm test`: Runs the 23 verified unit & regression tests with `node --test tests/*.test.js`.
+- `npm run test:smoke`: Runs automated headless end-to-end verification via Electron.
+- `npm run test:all`: Runs both the unit test suite and the headless Electron smoke verification.
 - `npm run clean`: Cleans the `src/ui/dist/` build directory.
 
 ### Project Layout
 ```
 Pangu/
-├── main.js                  # Electron Main process (Multi-display, shortcuts, IPC)
+├── main.js                  # Electron Main process (Multi-display, DPAPI, IPC validation)
 ├── preload.js               # Context isolation security bridge
 ├── run_pangu.bat            # Windows 1-click startup batch script
 ├── package.json             # NPM dependencies & scripts
+├── tests/                   # 23 Automated unit & regression test suites
+│   ├── brain.test.js        # AI prompt, history normalization & timeout tests
+│   ├── memory.test.js       # SQLite persistence, DPAPI encryption & XP bounds
+│   ├── pet_state.test.js    # State machine and activity logic tests
+│   └── privacy.test.js      # Panic toggle and permission gating tests
 ├── data/                    # SQLite database storage (git-ignored)
 │   └── .gitkeep
 ├── docs/                    # Architectural & API documentation
@@ -29,10 +36,10 @@ Pangu/
 │   └── DEVELOPMENT.md
 ├── src/
 │   ├── core/                # Business logic & state machines
-│   │   ├── brain.js         # Gemini API & offline cognitive engine
-│   │   ├── memory.js        # SQLite persistence layer
+│   │   ├── brain.js         # Gemini API & offline cognitive engine (with timeouts)
+│   │   ├── memory.js        # SQLite persistence layer (with DPAPI encryption)
 │   │   ├── pet_state.js     # Autonomous behavior state machine
-│   │   └── privacy.js       # Emergency privacy switch manager
+│   │   └── privacy.js       # Emergency privacy & permission manager
 │   ├── legacy/              # Archived early 2D canvas engine
 │   │   ├── pangu_character.js
 │   │   └── README.md

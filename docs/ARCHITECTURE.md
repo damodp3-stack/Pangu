@@ -120,3 +120,18 @@ PANGU was engineered to solve the "Chatbot Box Problem" — where traditional AI
 - Uses `better-sqlite3` with `journal_mode = WAL` (Write-Ahead Logging) and `synchronous = NORMAL` for sub-millisecond local reads and writes.
 - Prepared statement caching prevents SQL compilation overhead.
 - Stores user preferences, chat logs, RPG levels/XP, and masked API keys.
+
+### 6. Security Architecture & Threat Mitigation
+- **Windows DPAPI Credential Encryption:** API keys are encrypted at rest with `safeStorage.encryptString()` / `safeStorage.decryptString()`, storing only `enc_dpapi:<base64>` ciphers in SQLite. Fails closed if encryption cannot be guaranteed.
+- **Uniform Screen Vision Privacy Gating:** Screen vision requests (both automated desktop captures and caller-supplied dropped files) are evaluated through `PrivacyManager.canUseScreenVision()`. Captures are strictly blocked if screen permissions are disabled or if emergency panic mode (`Ctrl+Shift+P`) is engaged.
+- **Electron Navigation Guards:** `setWindowOpenHandler` denies all internal popups and redirects external links (`https:`) to the user's default browser via `shell.openExternal`. `will-navigate` blocks navigation away from local `index.html`.
+- **Schema-Bounded IPC Layer:** Privileged operations (`pet:add-xp`, `preferences:set`, `memory:add`, `api-keys:save`) enforce type checks, allowed key whitelists, integer boundaries (`1 <= XP <= 1000`), and maximum string lengths.
+- **Request Circuit Breaker:** Brain API invocations are wrapped in `withTimeout(promise, 12000)` to ensure the companion never stalls or hangs indefinitely during network interruptions.
+
+### 7. Automated Testing Strategy (`tests/`)
+- Powered by Node.js built-in `node:test` and `node:assert/strict` with zero external test runner overhead.
+- 23 unit and regression tests covering:
+  - SQLite persistence, WAL pragmas, migrations, and encrypted credential storage (`tests/memory.test.js`).
+  - Cognitive prompt generation, turn-taking normalization, action parsing, and timeouts (`tests/brain.test.js`).
+  - Privacy state machine, panic controls, and uniform vision permission gates (`tests/privacy.test.js`).
+  - Autonomous pet state machine, hunger/happiness physics, and level-up mechanics (`tests/pet_state.test.js`).
