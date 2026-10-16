@@ -1,0 +1,39 @@
+{
+  "name": "pangu",
+  "version": "1.1.0",
+  "description": "PANGU — 3D Native AI Desktop Companion living on your Windows screen",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild src/ui/components/app.js --bundle --outfile=src/ui/dist/bundle.js --format=iife",
+    "build:prod": "esbuild src/ui/components/app.js --bundle --minify --sourcemap --outfile=src/ui/dist/bundle.js --format=iife",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron .",
+    "test": "npm run build && electron scratch/verify_full_system.js",
+    "clean": "node -e \"const fs=require('fs'); ['src/ui/dist/bundle.js', 'src/ui/dist/bundle.js.map'].forEach(f=>fs.existsSync(f)&&fs.unlinkSync(f));\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damodp3-stack/Pangu.git"
+  },
+  "keywords": [
+    "pangu",
+    "ai-companion",
+    "threejs",
+    "gemini",
+    "desktop-pet",
+    "electron"
+  ],
+  "author": "Damo",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "@google/genai": "^2.27.0",
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.5",
+    "three": "^0.186.1"
+  }
+}

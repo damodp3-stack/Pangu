@@ -1,0 +1,36 @@
+/* PANGU — FIRE OBSIDIAN EMBER THEME (DARK MODE) */
+body.theme-dark {
+  --bg-panel: rgba(11, 15, 20, 0.88);
+  --border-panel: rgba(255, 59, 48, 0.22);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(255, 59, 48, 0.12);
+
+  --bg-card: rgba(11, 42, 74, 0.35);
+  --bg-bubble: rgba(11, 15, 20, 0.95);
+  --border-bubble: rgba(255, 138, 0, 0.4);
+
+  --text-primary: #F5F7FA;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+
+  --accent-primary: #FF3B30; /* Red Accent */
+  --accent-secondary: #FF8A00; /* Orange Energy */
+  --accent-glow: #3DDCFF; /* Sky Blue Forehead Crest Glow */
+  --accent-gradient: linear-gradient(135deg, #FF3B30 0%, #FF8A00 100%);
+
+  --mood-gradient: linear-gradient(90deg, #FF8A00 0%, #FF3B30 50%, #3DDCFF 100%);
+  --character-glow: rgba(255, 59, 48, 0.45);
+
+  --bg-btn: rgba(255, 255, 255, 0.05);
+  --bg-btn-hover: rgba(255, 59, 48, 0.18);
+  --border-btn: rgba(255, 255, 255, 0.08);
+
+  --bg-chip: rgba(255, 138, 0, 0.1);
+  --bg-chip-hover: rgba(255, 59, 48, 0.25);
+  --border-chip: rgba(255, 138, 0, 0.25);
+
+  --user-bubble: linear-gradient(135deg, #E0261B 0%, #FF6014 100%);
+  --pangu-bubble: rgba(11, 42, 74, 0.45);
+
+  --bg-input: rgba(11, 15, 20, 0.7);
+  --border-input: rgba(255, 255, 255, 0.1);
+}

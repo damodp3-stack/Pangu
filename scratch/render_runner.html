@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; background: #181e24; overflow: hidden; }
+    #container { width: 1000px; height: 800px; }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script src="dist/render_bundle.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const result = await window.startRender();
+        if (typeof require !== 'undefined') {
+          const { ipcRenderer } = require('electron');
+          ipcRenderer.send('render-complete', result);
+        }
+      } catch (err) {
+        console.error('Render error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

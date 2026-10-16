@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="status">Generating Sellsword Fox 3D Asset...</div>
+<script src="bundle_builder.js"></script>
+<script>
+  const fs = require('fs');
+  const path = require('path');
+  const { ipcRenderer } = require('electron');
+
+  window.generateSellswordFox().then(({ glb }) => {
+    const buffer = Buffer.from(glb);
+    const dest = path.resolve(__dirname, '..', 'src', 'ui', 'assets', 'SellswordFox.glb');
+    fs.writeFileSync(dest, buffer);
+    console.log('[SUCCESS] SellswordFox.glb written to:', dest, 'Bytes:', buffer.length);
+    ipcRenderer.send('export-done', buffer.length);
+  }).catch((err) => {
+    console.error('[ERROR] Failed generating 3D asset:', err);
+    ipcRenderer.send('export-failed', err.message);
+  });
+</script>
+</body>
+</html>

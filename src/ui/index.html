@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob: file:; img-src 'self' data: blob: file: https:; script-src 'self' 'unsafe-inline'; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:;">
+  <title>PANGU — 3D AI Desktop Companion</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/dark_theme.css">
+  <link rel="stylesheet" href="styles/light_theme.css">
+</head>
+<body class="theme-dark">
+
+  <!-- 1. 3D WebGL Canvas Layer (Three.js renders Pangu in full 3D) -->
+  <div id="pangu-3d-container"></div>
+
+  <!-- 2. Invisible Hit Box that tracks Pangu's 3D position for drag & clicks -->
+  <div id="pangu-hit-box" class="interactive" title="Left-click: Pet / Drag | Right-click: Menu"></div>
+
+  <!-- 3. Organic 3D Speech Bubble (Anchored to Pangu's 3D Head) -->
+  <div id="pangu-3d-speech">Hi Damo! Let's build something amazing together! ♡</div>
+
+  <!-- 4. Floating Talk Pill (Appears only when user wants to talk) -->
+  <div id="pangu-talk-pill" class="interactive">
+    <input type="text" id="talk-input" placeholder="Ask Pangu anything, da..." autocomplete="off">
+    <button class="pill-btn secondary" id="talk-vision-btn" title="Inspect Screen (Ctrl+Shift+S)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    </button>
+    <button class="pill-btn secondary" id="talk-mic-btn" title="Voice Input (STT)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+        <line x1="12" y1="19" x2="12" y2="23"></line>
+        <line x1="8" y1="23" x2="16" y2="23"></line>
+      </svg>
+    </button>
+    <button class="pill-btn" id="talk-send-btn" title="Send message">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 4B. Floating Pomodoro Focus Badge -->
+  <div id="pangu-focus-pill" class="interactive">
+    <span class="focus-pulse-dot">🍅</span>
+    <span id="focus-time-display">25:00</span>
+    <span class="focus-label">FOCUS</span>
+    <button class="focus-close-btn" id="focus-stop-btn" title="Stop Focus Session">✕</button>
+  </div>
+
+  <!-- 5. Floating Context Menu (Opens on Right-Click Pangu) -->
+  <div id="pangu-radial-menu" class="interactive">
+    <!-- RPG Level & Friendship Badge -->
+    <div class="menu-rpg-card" id="menu-rpg-card">
+      <div class="rpg-card-top">
+        <span class="rpg-level-pill" id="rpg-level-badge">Lvl 1</span>
+        <span class="rpg-title" id="rpg-title-badge">Novice Companion 🐾</span>
+      </div>
+      <div class="rpg-bar-container">
+        <div class="rpg-bar-fill" id="rpg-bar-fill" style="width: 0%;"></div>
+      </div>
+      <div class="rpg-xp-text" id="rpg-xp-text">0 / 100 XP</div>
+    </div>
+    <div class="menu-divider"></div>
+
+    <button class="menu-item" id="menu-talk">
+      <span>💬</span>
+      <span>Talk to Pangu (Space)</span>
+    </button>
+    <button class="menu-item" id="menu-focus">
+      <span>🍅</span>
+      <span id="menu-focus-text">Focus Buddy: 25m Pomodoro</span>
+    </button>
+    <button class="menu-item" id="menu-aura">
+      <span id="menu-aura-icon">🔥</span>
+      <span id="menu-aura-text">Elemental Aura: Fire 🔥</span>
+    </button>
+    <button class="menu-item" id="menu-vision">
+      <span>👀</span>
+      <span>Inspect Screen (Ctrl+Shift+S)</span>
+    </button>
+    <button class="menu-item" id="menu-mic">
+      <span>🎙️</span>
+      <span>Voice Input (STT)</span>
+    </button>
+    <button class="menu-item" id="menu-play">
+      <span>🤸‍♂️</span>
+      <span>Skill: Somersault Flip</span>
+    </button>
+    <button class="menu-item" id="menu-laser">
+      <span id="menu-laser-icon">🔴</span>
+      <span id="menu-laser-text">Play: Laser Chase (L)</span>
+    </button>
+    <button class="menu-item" id="menu-ball">
+      <span id="menu-ball-icon">🎾</span>
+      <span id="menu-ball-text">Play: Toss Ball Fetch (B)</span>
+    </button>
+    <button class="menu-item" id="menu-display" style="display: none;">
+      <span id="menu-display-icon">🖥️</span>
+      <span id="menu-display-text">Jump to Next Monitor (Tab)</span>
+    </button>
+    <button class="menu-item" id="menu-burst">
+      <span>✨</span>
+      <span>Skill: Elemental Burst</span>
+    </button>
+    <button class="menu-item" id="menu-roam">
+      <span>🐾</span>
+      <span id="menu-roam-text">Roam Desktop: ON</span>
+    </button>
+    <button class="menu-item" id="menu-wings">
+      <span id="menu-wings-icon">🪽</span>
+      <span id="menu-wings-text">Celestial Wings: OFF</span>
+    </button>
+    <button class="menu-item" id="menu-sound">
+      <span id="menu-sound-icon">🔊</span>
+      <span id="menu-sound-text">Sound: ON</span>
+    </button>
+    <button class="menu-item" id="menu-feed">
+      <span>🍗</span>
+      <span>Feed Treat</span>
+    </button>
+    <button class="menu-item" id="menu-sleep">
+      <span id="menu-sleep-icon">💤</span>
+      <span id="menu-sleep-text">Go to Sleep</span>
+    </button>
+    <div class="menu-divider"></div>
+    <button class="menu-item" id="menu-character">
+      <span id="menu-char-icon">🦊</span>
+      <span id="menu-char-text">Switch Mascot (Fox)</span>
+    </button>
+    <button class="menu-item" id="menu-theme">
+      <span id="menu-theme-icon">☀️</span>
+      <span id="menu-theme-text">Switch to Frost Theme</span>
+    </button>
+    <button class="menu-item" id="menu-settings">
+      <span>⚙️</span>
+      <span>Settings & API Key</span>
+    </button>
+    <div class="menu-divider"></div>
+    <button class="menu-item" id="menu-quit" style="color: #ff3b30;">
+      <span>✕</span>
+      <span>Close Pangu</span>
+    </button>
+  </div>
+
+  <!-- 6. Settings Modal (Only opens from menu) -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-card interactive">
+      <div class="modal-header">
+        <span>⚙️ Pangu 3D Companion Settings</span>
+        <button id="settings-close-btn" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:16px;">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Sound & Audio Effects</label>
+        <select id="setting-sound" class="form-select">
+          <option value="true">🔊 Sound Effects Enabled (Cute Chimes & Purrs)</option>
+          <option value="false">🔇 Silent Mode (Mute All Sounds)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Voice Speech Mode (TTS / Vocalizer)</label>
+        <select id="setting-voice-mode" class="form-select">
+          <option value="acoustic">🎵 Adorable Animal Vocalizer (Cute Acoustic Syllables)</option>
+          <option value="tts">🗣️ Natural Spoken Voice (Browser Speech Synthesis)</option>
+          <option value="both">✨ Both (Acoustic Chime + Spoken Voice)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Celestial Wings & Halo Aura</label>
+        <select id="setting-wings" class="form-select">
+          <option value="false">Off (Clean Natural 3D Pet - Recommended)</option>
+          <option value="true">On (Glowing Celestial Wings & Halo)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">3D Mascot Character</label>
+        <select id="setting-character" class="form-select">
+          <option value="fox">🦊 Mystic Kitsune (Celestial Fox)</option>
+          <option value="sellsword_fox">⚔️ Sellsword Fox (Warrior Fox Rig)</option>
+          <option value="dragon">🐉 Cyber Dragon</option>
+          <option value="cat">🐱 Kawaii Shadow Kitty</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Theme / Visual Skin</label>
+        <select id="setting-theme" class="form-select">
+          <option value="dark">🔥 Fire Obsidian Ember (Dark Mode)</option>
+          <option value="light">❄️ Frost Celestial Blue (Light Mode)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Google Gemini API Key (Free Tier)</label>
+        <input type="password" id="setting-gemini-key" class="form-input" placeholder="AIzaSy...">
+        <small style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+          Free key from <a href="https://aistudio.google.com" target="_blank" style="color: var(--accent-glow);">Google AI Studio</a>. (Leave blank for offline companion mode)
+        </small>
+      </div>
+
+      <div class="modal-btn-row">
+        <button class="btn-secondary" id="settings-cancel-btn">Cancel</button>
+        <button class="btn-primary" id="settings-save-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Emergency Panic Banner (Ctrl+Shift+P) -->
+  <div id="panic-banner">
+    <div style="font-size: 28px; font-weight: 800; color: #ff3b30;">🚨 PANGU PAUSED</div>
+    <div style="font-size: 14px; color: #94a3b8; max-width: 400px; text-align: center;">
+      Emergency Privacy Protection is Active. Pangu is completely paused.
+    </div>
+    <button class="btn-primary interactive" id="panic-resume-btn" style="padding: 12px 28px; font-size: 15px; margin-top: 10px;">
+      ▶ Resume Pangu (Ctrl+Shift+P)
+    </button>
+  </div>
+
+  <!-- 8. Interactive Mini-Game Elements (Laser Pointer & Toy Ball) -->
+  <div id="pangu-laser-pointer"></div>
+  <div id="pangu-toy-ball"></div>
+
+  <!-- Scripts -->
+  <script src="components/sound_fx.js"></script>
+  <script src="dist/bundle.js"></script>
+</body>
+</html>

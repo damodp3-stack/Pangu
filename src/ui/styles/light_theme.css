@@ -1,0 +1,36 @@
+/* PANGU — FROST CELESTIAL BLUE THEME (LIGHT MODE) */
+body.theme-light {
+  --bg-panel: rgba(244, 248, 253, 0.88);
+  --border-panel: rgba(61, 220, 255, 0.35);
+  --shadow-panel: 0 16px 40px rgba(79, 117, 255, 0.16), 0 0 24px rgba(61, 220, 255, 0.2);
+
+  --bg-card: rgba(220, 235, 255, 0.5);
+  --bg-bubble: rgba(255, 255, 255, 0.96);
+  --border-bubble: rgba(61, 220, 255, 0.5);
+
+  --text-primary: #0B172E;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+
+  --accent-primary: #2563EB; /* Celestial Blue */
+  --accent-secondary: #0284C7; /* Sky Blue */
+  --accent-glow: #38BDF8; /* Frost Glow */
+  --accent-gradient: linear-gradient(135deg, #38BDF8 0%, #2563EB 100%);
+
+  --mood-gradient: linear-gradient(90deg, #38BDF8 0%, #3B82F6 50%, #6366F1 100%);
+  --character-glow: rgba(56, 189, 248, 0.45);
+
+  --bg-btn: rgba(0, 0, 0, 0.04);
+  --bg-btn-hover: rgba(56, 189, 248, 0.16);
+  --border-btn: rgba(0, 0, 0, 0.08);
+
+  --bg-chip: rgba(56, 189, 248, 0.12);
+  --bg-chip-hover: rgba(37, 99, 235, 0.2);
+  --border-chip: rgba(56, 189, 248, 0.3);
+
+  --user-bubble: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+  --pangu-bubble: rgba(255, 255, 255, 0.9);
+
+  --bg-input: rgba(255, 255, 255, 0.85);
+  --border-input: rgba(56, 189, 248, 0.25);
+}

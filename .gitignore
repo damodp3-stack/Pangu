@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Runtime User Data & Cache
+.userData/
+*.log
+
+# SQLite Database & user persistent data (auto-created on first run)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+!data/.gitkeep
+
+# Build output
+src/ui/dist/
+scratch/dist/
+scratch/bundle_*.js
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Temporary OS files
+.DS_Store
+Thumbs.db
