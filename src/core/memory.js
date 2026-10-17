@@ -128,19 +128,21 @@ class PanguMemory {
   }
 
   seedDefaultData() {
-    // Default Preferences
-    this.stmts.setPref.run('user_name', 'Damo');
-    this.stmts.setPref.run('theme', 'dark'); // 'dark' = Fire Obsidian Ember, 'light' = Frost Celestial Blue
-    this.stmts.setPref.run('language_preference', 'tanglish');
-    this.stmts.setPref.run('sound_enabled', 'true');
-    this.stmts.setPref.run('activity_level', 'balanced');
-    this.stmts.setPref.run('screen_permission', 'false');
-    this.stmts.setPref.run('mic_permission', 'false');
+    // Insert defaults only for new settings; never overwrite a user's saved profile.
+    const defaults = {
+      user_name: '', user_age: '', user_gender: '', user_dob: '',
+      companion_bond: 'bestie', // 'sister', 'bestie', 'brother', 'pet', 'mentor'
+      theme: 'dark', language_preference: 'tanglish', sound_enabled: 'true',
+      activity_level: 'balanced', screen_permission: 'false', mic_permission: 'false',
+      companion_presentation: 'neutral', conversation_style: 'friendly',
+      visual_style: 'classic', onboarding_complete: 'false'
+    };
+    const insertDefault = this.db.prepare('INSERT OR IGNORE INTO preferences (key, value) VALUES (?, ?)');
+    for (const [key, value] of Object.entries(defaults)) insertDefault.run(key, value);
 
     // Default Seed Memories
     const countMemories = this.db.prepare('SELECT COUNT(*) as count FROM memories').get().count;
     if (countMemories === 0) {
-      this.stmts.addMemory.run('profile', 'Name: Damo');
       this.stmts.addMemory.run('project', 'Building PANGU - AI Best Friend & Desktop Companion');
       this.stmts.addMemory.run('interest', 'Loves coding, AI, tech, and building big dreams');
       this.stmts.addMemory.run('language', 'Enjoys Tamil + English (Tanglish) friendly communication');

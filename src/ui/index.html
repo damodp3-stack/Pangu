@@ -18,7 +18,7 @@
   <div id="pangu-hit-box" class="interactive" title="Left-click: Pet / Drag | Right-click: Menu"></div>
 
   <!-- 3. Organic 3D Speech Bubble (Anchored to Pangu's 3D Head) -->
-  <div id="pangu-3d-speech">Hi Damo! Let's build something amazing together! ♡</div>
+  <div id="pangu-3d-speech">Hi! Let's build something amazing together! ♡</div>
 
   <!-- 4. Floating Talk Pill (Appears only when user wants to talk) -->
   <div id="pangu-talk-pill" class="interactive">
@@ -116,6 +116,10 @@
       <span id="menu-wings-icon">🪽</span>
       <span id="menu-wings-text">Celestial Wings: OFF</span>
     </button>
+    <button class="menu-item" id="menu-garden">
+      <span id="menu-garden-icon">🌸</span>
+      <span id="menu-garden-text">3D Garden: OFF</span>
+    </button>
     <button class="menu-item" id="menu-sound">
       <span id="menu-sound-icon">🔊</span>
       <span id="menu-sound-text">Sound: ON</span>
@@ -155,6 +159,80 @@
         <span>⚙️ Pangu 3D Companion Settings</span>
         <button id="settings-close-btn" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:16px;">✕</button>
       </div>
+
+      <section class="profile-setup-section">
+        <h3 id="profile-setup-heading">Your profile & companion style</h3>
+        <p class="profile-privacy-note">These details stay in Pangu's local database on this PC. If cloud AI is enabled, your name, companion presentation, reply style and broad age group may be included in AI requests. Gender and exact birth date are not sent. You can leave any field blank.</p>
+        <div class="form-group">
+          <label class="form-label" for="profile-name">What should Pangu call you?</label>
+          <input id="profile-name" class="form-input" maxlength="60" autocomplete="given-name" placeholder="Your preferred name">
+        </div>
+        <div class="profile-field-row">
+          <div class="form-group">
+            <label class="form-label" for="profile-age">Age (optional)</label>
+            <input id="profile-age" class="form-input" type="number" min="1" max="120" inputmode="numeric" placeholder="Age">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profile-gender">Gender (optional)</label>
+            <select id="profile-gender" class="form-select">
+              <option value="">Choose not to say</option>
+              <option value="woman">Woman</option>
+              <option value="man">Man</option>
+              <option value="nonbinary">Non-binary</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profile-dob">Date of birth (optional)</label>
+          <input id="profile-dob" class="form-input" type="date" autocomplete="bday">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profile-bond">Companion relationship & vibe</label>
+          <select id="profile-bond" class="form-select">
+            <option value="sister">🌸 Sweet Caring Sister / Thangom (Affectionate & protective)</option>
+            <option value="bestie">🤝 Loyal Best Friend / Machi (Fun, high energy & loyal)</option>
+            <option value="pet">🐾 Cuddly Desktop Pet (Cute purrs & playful antics)</option>
+            <option value="mentor">💡 Digital Partner / Mentor (Calm, wise & motivational)</option>
+          </select>
+        </div>
+        <div class="profile-field-row">
+          <div class="form-group">
+            <label class="form-label" for="profile-persona">Companion presentation</label>
+            <select id="profile-persona" class="form-select">
+              <option value="neutral">Neutral</option>
+              <option value="feminine">Feminine</option>
+              <option value="masculine">Masculine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profile-style">Conversation style</label>
+            <select id="profile-style" class="form-select">
+              <option value="friendly">Friendly</option>
+              <option value="calm">Calm</option>
+              <option value="playful">Playful</option>
+              <option value="direct">Direct</option>
+              <option value="supportive">Supportive</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profile-language">Reply language</label>
+          <select id="profile-language" class="form-select">
+            <option value="tanglish">Tanglish (Tamil + English)</option>
+            <option value="tamil">Tamil</option>
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profile-visual-style">3D companion atmosphere</label>
+          <select id="profile-visual-style" class="form-select">
+            <option value="classic">Classic companion</option>
+            <option value="celestial_garden">Celestial garden — butterflies and little birds</option>
+          </select>
+        </div>
+      </section>
 
       <div class="form-group">
         <label class="form-label">Sound & Audio Effects</label>
@@ -208,8 +286,150 @@
       </div>
 
       <div class="modal-btn-row">
+        <button class="btn-secondary" id="settings-skip-btn" style="display:none;">Skip setup</button>
         <button class="btn-secondary" id="settings-cancel-btn">Cancel</button>
         <button class="btn-primary" id="settings-save-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6B. Interactive Companion Onboarding Wizard (Companion-Led First Launch) -->
+  <div class="modal-overlay" id="pangu-onboarding-modal">
+    <div class="modal-card onboarding-card interactive">
+      <!-- Companion Header & Speech Bubble -->
+      <div class="onboard-header">
+        <div class="onboard-avatar-badge">🦊✨</div>
+        <div class="onboard-speech-wrap">
+          <div class="onboard-speech-bubble" id="onboard-companion-speech">
+            Hi! I'm PANGU, your 3D AI desktop companion! What should I call you, da? ♡
+          </div>
+        </div>
+      </div>
+
+      <div class="onboard-progress-bar">
+        <div class="onboard-progress-fill" id="onboard-progress-fill"></div>
+      </div>
+      <div class="onboard-step-indicator" id="onboard-step-indicator">Step 1 of 6</div>
+
+      <!-- Step 1: Your Preferred Name -->
+      <div class="onboard-step" id="onboard-step-1">
+        <label class="form-label" for="onboard-name-input">What is your name / preferred nickname?</label>
+        <input type="text" id="onboard-name-input" class="form-input onboard-input" placeholder="e.g. Damo, Priya, Ananya..." maxlength="50" autocomplete="given-name">
+        <div class="onboard-hint">Pangu will use this name in warm greetings, high-fives, and encouragement! 🐾</div>
+      </div>
+
+      <!-- Step 2: Birthday & Age -->
+      <div class="onboard-step" id="onboard-step-2" style="display: none;">
+        <label class="form-label" for="onboard-dob-input">When is your birthday? 🎂</label>
+        <input type="date" id="onboard-dob-input" class="form-input onboard-input">
+        <div class="onboard-badge-preview" id="onboard-age-display">Leave blank if you prefer not to share</div>
+        <div class="onboard-hint">On your birthday, Pangu will jump with birthday confetti, sing cute chimes, and celebrate with you! 🎈</div>
+      </div>
+
+      <!-- Step 3: Identity & Gender Dynamic -->
+      <div class="onboard-step" id="onboard-step-3" style="display: none;">
+        <label class="form-label">How should Pangu speak with you?</label>
+        <div class="onboard-cards-grid">
+          <div class="onboard-card gender-card selected" data-value="female">
+            <span class="card-icon">🌸</span>
+            <div class="card-title">Woman / Girl</div>
+            <div class="card-desc">Warm, sweet & caring ("sis / thangom / chellam" vibes + aesthetic 3D garden)</div>
+          </div>
+          <div class="onboard-card gender-card" data-value="male">
+            <span class="card-icon">⚡</span>
+            <div class="card-title">Man / Boy</div>
+            <div class="card-desc">Energetic, hype brotherly comrade ("bro / machi / nanba" vibes)</div>
+          </div>
+          <div class="onboard-card gender-card" data-value="nonbinary">
+            <span class="card-icon">🌈</span>
+            <div class="card-title">Non-binary / Open</div>
+            <div class="card-desc">Warm, inclusive, friendly partner vibes</div>
+          </div>
+          <div class="onboard-card gender-card" data-value="prefer_not_to_say">
+            <span class="card-icon">🔒</span>
+            <div class="card-title">Prefer not to say</div>
+            <div class="card-desc">Neutral companion dynamic</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Companion Bond & Vibe -->
+      <div class="onboard-step" id="onboard-step-4" style="display: none;">
+        <label class="form-label">What companion bond feels best for you?</label>
+        <div class="onboard-cards-grid">
+          <div class="onboard-card bond-card selected" data-value="sister">
+            <span class="card-icon">🌸</span>
+            <div class="card-title">Caring Sister / Thangom</div>
+            <div class="card-desc">Affectionate, protective, sweet checks if you drank water & ate!</div>
+          </div>
+          <div class="onboard-card bond-card" data-value="bestie">
+            <span class="card-icon">🤝</span>
+            <div class="card-title">Loyal Best Friend / Machi</div>
+            <div class="card-desc">Fun, energetic, ride-or-die buddy who hypes your dreams!</div>
+          </div>
+          <div class="onboard-card bond-card" data-value="pet">
+            <span class="card-icon">🐾</span>
+            <div class="card-title">Adorable Desktop Pet</div>
+            <div class="card-desc">Playful wiggles, cuddling, purring and cute somersault tricks!</div>
+          </div>
+          <div class="onboard-card bond-card" data-value="mentor">
+            <span class="card-icon">💡</span>
+            <div class="card-title">Digital Partner & Mentor</div>
+            <div class="card-desc">Calm, wise, motivating productivity & coding coach.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: 3D Atmosphere (Butterflies, Birds, Sakura Petals) -->
+      <div class="onboard-step" id="onboard-step-5" style="display: none;">
+        <label class="form-label">Choose your 3D Companion Atmosphere ✨</label>
+        <div class="onboard-cards-grid">
+          <div class="onboard-card atmosphere-card selected" data-value="celestial_garden">
+            <span class="card-icon">🦋🌸</span>
+            <div class="card-title">Celestial Garden</div>
+            <div class="card-desc">Fluttering 3D butterflies, singing birds, drifting Sakura flower petals & fairy dust!</div>
+          </div>
+          <div class="onboard-card atmosphere-card" data-value="classic">
+            <span class="card-icon">🐾✨</span>
+            <div class="card-title">Classic Studio Pet</div>
+            <div class="card-desc">Clean natural 3D mascot living cleanly on your Windows taskbar.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Mascot, Language & AI Key -->
+      <div class="onboard-step" id="onboard-step-6" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Choose your 3D Mascot Character</label>
+          <div class="onboard-mascots-row">
+            <div class="onboard-mascot-pill mascot-card selected" data-value="fox">🦊 Kitsune Fox</div>
+            <div class="onboard-mascot-pill mascot-card" data-value="sellsword_fox">⚔️ Sellsword Fox</div>
+            <div class="onboard-mascot-pill mascot-card" data-value="dragon">🐉 Cyber Dragon</div>
+            <div class="onboard-mascot-pill mascot-card" data-value="cat">🐱 Shadow Kitty</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="onboard-lang-select">Reply Language</label>
+          <select id="onboard-lang-select" class="form-select">
+            <option value="tanglish" selected>Tanglish (Tamil + English — Highly Recommended!)</option>
+            <option value="tamil">Tamil (தமிழ்)</option>
+            <option value="english">English</option>
+            <option value="hindi">Hindi (हिंदी)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="onboard-gemini-key">Google Gemini API Key (Optional — Free)</label>
+          <input type="password" id="onboard-gemini-key" class="form-input" placeholder="AIzaSy... (leave blank for offline companion)">
+          <div class="onboard-hint">You can get a free key anytime at aistudio.google.com, or use Pangu offline!</div>
+        </div>
+      </div>
+
+      <div class="modal-btn-row" style="margin-top: 16px;">
+        <button class="btn-secondary" id="onboard-skip-btn">Skip Setup</button>
+        <button class="btn-secondary" id="onboard-prev-btn" style="display: none;">⮜ Back</button>
+        <button class="btn-primary" id="onboard-next-btn">Next ➔</button>
       </div>
     </div>
   </div>

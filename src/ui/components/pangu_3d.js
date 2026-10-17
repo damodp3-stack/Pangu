@@ -21,6 +21,7 @@ export class Pangu3D {
     this.container = canvasContainer;
     this.theme = options.theme || 'dark'; // 'dark' (Fire Obsidian) or 'light' (Frost Celestial)
     this.currentCharacterType = options.character || 'sellsword_fox'; // 'sellsword_fox', 'fox', 'dragon', 'cat'
+    this.visualStyle = options.visualStyle || 'classic';
     this.auraEnabled = options.aura === true; // Default false for clean, studio-grade natural 3D pet
     this.elementalAura = options.elementalAura || 'fire'; // 'fire', 'thunder', 'frost', 'void'
     this.auraParticleTimer = 0;
@@ -88,6 +89,7 @@ export class Pangu3D {
     this.currentModel = null;
     this.mixer = null;
     this.actions = {};
+    this.stateActions = {};
     this.currentAction = null;
 
     // Procedural Rig & Skeletal Layering
@@ -147,6 +149,7 @@ export class Pangu3D {
     this.initThree();
     this.initLights();
     this.buildCharacterHierarchy();
+    this.buildAmbientCompanions();
     this.loadCharacter(this.currentCharacterType);
     this.initInteraction();
     this.animate();
@@ -326,7 +329,7 @@ export class Pangu3D {
     // High performance WebGL renderer with transparent alpha
     this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(this.screenWidth, this.screenHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
@@ -590,6 +593,249 @@ export class Pangu3D {
     this.auraEnabled = !!enabled;
     if (this.wingsGroup) this.wingsGroup.visible = this.auraEnabled && (this.currentCharacterType !== 'dragon');
     if (this.crestGroup) this.crestGroup.visible = this.auraEnabled;
+  }
+
+  setVisualStyle(style) {
+    this.visualStyle = style === 'celestial_garden' ? style : 'classic';
+    if (this.ambientGroup) this.ambientGroup.visible = this.visualStyle === 'celestial_garden';
+  }
+
+  toggleGarden() {
+    const next = this.visualStyle === 'celestial_garden' ? 'classic' : 'celestial_garden';
+    this.setVisualStyle(next);
+    return next;
+  }
+
+  buildAmbientCompanions() {
+    this.ambientGroup = new THREE.Group();
+    this.ambientGroup.visible = false;
+    this.ambientActors = [];
+    this.sakuraPetals = [];
+    this.fairyDust = [];
+    this.characterGroup.add(this.ambientGroup);
+
+    // 1. HIGH-PRECISION 3D BUTTERFLIES WITH DUAL-LOBE WINGS & RADIANT MATERIALS
+    const makeForewingGeo = () => {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0.08, 0.15, 0.28, 0.38, 0.42, 0.32);
+      shape.bezierCurveTo(0.48, 0.22, 0.36, 0.08, 0.22, 0.02);
+      shape.bezierCurveTo(0.12, -0.02, 0.04, -0.01, 0, 0);
+      return new THREE.ShapeGeometry(shape, 8);
+    };
+
+    const makeHindwingGeo = () => {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0.06, -0.04, 0.22, -0.06, 0.26, -0.16);
+      shape.bezierCurveTo(0.24, -0.26, 0.12, -0.24, 0.05, -0.14);
+      shape.bezierCurveTo(0.02, -0.08, 0.01, -0.03, 0, 0);
+      return new THREE.ShapeGeometry(shape, 8);
+    };
+
+    const forewingGeo = makeForewingGeo();
+    const hindwingGeo = makeHindwingGeo();
+
+    const addButterfly = (x, y, z, colorHex, emissiveHex, speed, orbitRadius, phase) => {
+      const actor = new THREE.Group();
+
+      const wingMat = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        emissive: emissiveHex,
+        emissiveIntensity: 0.65,
+        roughness: 0.35,
+        metalness: 0.15,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false
+      });
+
+      // Body (Thorax & Head)
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x221824, roughness: 0.6 });
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.13, 4, 6), bodyMat);
+      actor.add(body);
+
+      // Left Wing Assembly
+      const leftWingGroup = new THREE.Group();
+      leftWingGroup.position.set(-0.012, 0, 0);
+      const leftFore = new THREE.Mesh(forewingGeo, wingMat);
+      leftFore.rotation.y = Math.PI;
+      leftFore.scale.set(0.85, 0.85, 0.85);
+      const leftHind = new THREE.Mesh(hindwingGeo, wingMat);
+      leftHind.rotation.y = Math.PI;
+      leftHind.scale.set(0.85, 0.85, 0.85);
+      leftWingGroup.add(leftFore, leftHind);
+
+      // Right Wing Assembly
+      const rightWingGroup = new THREE.Group();
+      rightWingGroup.position.set(0.012, 0, 0);
+      const rightFore = new THREE.Mesh(forewingGeo, wingMat);
+      rightFore.scale.set(0.85, 0.85, 0.85);
+      const rightHind = new THREE.Mesh(hindwingGeo, wingMat);
+      rightHind.scale.set(0.85, 0.85, 0.85);
+      rightWingGroup.add(rightFore, rightHind);
+
+      actor.add(leftWingGroup, rightWingGroup);
+      actor.position.set(x, y, z);
+      this.ambientGroup.add(actor);
+
+      this.ambientActors.push({
+        actor,
+        leftWing: leftWingGroup,
+        rightWing: rightWingGroup,
+        baseX: x,
+        baseY: y,
+        baseZ: z,
+        speed,
+        radius: orbitRadius,
+        phase,
+        kind: 'butterfly'
+      });
+    };
+
+    // 2. ARTICULATED 3D SONGBIRDS WITH HINGED FLAPPING WINGS
+    const birdWingShape = new THREE.Shape();
+    birdWingShape.moveTo(0, 0);
+    birdWingShape.bezierCurveTo(0.12, 0.18, 0.32, 0.28, 0.44, 0.22);
+    birdWingShape.bezierCurveTo(0.36, 0.08, 0.20, -0.04, 0.06, -0.06);
+    birdWingShape.bezierCurveTo(0.02, -0.04, 0.01, -0.02, 0, 0);
+    const birdWingGeo = new THREE.ShapeGeometry(birdWingShape, 6);
+
+    const addBird = (x, y, z, speed, radius, phase) => {
+      const actor = new THREE.Group();
+      const featherMat = new THREE.MeshStandardMaterial({
+        color: 0xfdf2f8,
+        roughness: 0.5,
+        metalness: 0.1
+      });
+      const goldMat = new THREE.MeshStandardMaterial({
+        color: 0xfbbf24,
+        emissive: 0xd97706,
+        emissiveIntensity: 0.3,
+        roughness: 0.4
+      });
+
+      // Body & Head
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), featherMat);
+      body.scale.set(1.4, 0.85, 0.75);
+      actor.add(body);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), featherMat);
+      head.position.set(0.12, 0.06, 0);
+      actor.add(head);
+
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.09, 5), goldMat);
+      beak.rotation.z = -Math.PI / 2;
+      beak.position.set(0.19, 0.04, 0);
+      actor.add(beak);
+
+      // Hinged Wings
+      const leftWing = new THREE.Mesh(birdWingGeo, featherMat);
+      leftWing.position.set(0, 0.04, -0.05);
+      leftWing.rotation.x = -Math.PI / 2.2;
+      actor.add(leftWing);
+
+      const rightWing = new THREE.Mesh(birdWingGeo, featherMat);
+      rightWing.position.set(0, 0.04, 0.05);
+      rightWing.rotation.x = Math.PI / 2.2;
+      rightWing.scale.set(1, -1, 1);
+      actor.add(rightWing);
+
+      actor.position.set(x, y, z);
+      this.ambientGroup.add(actor);
+
+      this.ambientActors.push({
+        actor,
+        leftWing,
+        rightWing,
+        baseX: x,
+        baseY: y,
+        baseZ: z,
+        speed,
+        radius,
+        phase,
+        kind: 'bird'
+      });
+    };
+
+    // 3. DRIFTING 3D SAKURA FLOWER PETALS (Feminine & Gentle Aesthetic Ambiance)
+    const petalShape = new THREE.Shape();
+    petalShape.moveTo(0, 0);
+    petalShape.bezierCurveTo(0.03, 0.05, 0.07, 0.12, 0.05, 0.18);
+    petalShape.bezierCurveTo(0.02, 0.22, -0.02, 0.22, -0.05, 0.18);
+    petalShape.bezierCurveTo(-0.07, 0.12, -0.03, 0.05, 0, 0);
+    const petalGeo = new THREE.ShapeGeometry(petalShape, 5);
+
+    const petalMat = new THREE.MeshStandardMaterial({
+      color: 0xfbcfe8,
+      emissive: 0xf472b6,
+      emissiveIntensity: 0.28,
+      roughness: 0.45,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.88,
+      depthWrite: false
+    });
+
+    for (let i = 0; i < 14; i++) {
+      const petalMesh = new THREE.Mesh(petalGeo, petalMat);
+      const scale = 0.65 + Math.random() * 0.55;
+      petalMesh.scale.set(scale, scale, scale);
+      const p = {
+        mesh: petalMesh,
+        x: (Math.random() - 0.5) * 3.4,
+        y: 0.3 + Math.random() * 2.2,
+        z: (Math.random() - 0.5) * 1.8,
+        fallSpeed: 0.18 + Math.random() * 0.14,
+        swaySpeed: 1.8 + Math.random() * 1.6,
+        swayRange: 0.08 + Math.random() * 0.12,
+        rotSpeedX: (Math.random() - 0.5) * 1.8,
+        rotSpeedY: (Math.random() - 0.5) * 2.2,
+        rotSpeedZ: (Math.random() - 0.5) * 1.5,
+        seed: Math.random() * 10
+      };
+      petalMesh.position.set(p.x, p.y, p.z);
+      this.ambientGroup.add(petalMesh);
+      this.sakuraPetals.push(p);
+    }
+
+    // 4. SHIMMERING FAIRY DUST / STARLIGHT PARTICLES
+    const dustGeo = new THREE.OctahedronGeometry(0.024, 0);
+    const dustMat = new THREE.MeshBasicMaterial({
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const dustMesh = new THREE.Mesh(dustGeo, dustMat);
+      const d = {
+        mesh: dustMesh,
+        baseX: (Math.random() - 0.5) * 2.8,
+        baseY: 0.6 + Math.random() * 1.8,
+        baseZ: (Math.random() - 0.5) * 1.4,
+        pulseSpeed: 2.0 + Math.random() * 3.0,
+        floatSpeed: 0.8 + Math.random() * 1.2,
+        phase: Math.random() * Math.PI * 2
+      };
+      dustMesh.position.set(d.baseX, d.baseY, d.baseZ);
+      this.ambientGroup.add(dustMesh);
+      this.fairyDust.push(d);
+    }
+
+    // Instantiate Vibrant Butterflies (Sakura Pink, Sky Azure, Monarch Gold, Violet Lilac)
+    addButterfly(-0.95, 1.25, 0.2, 0xf472b6, 0xec4899, 1.25, 0.42, 0.1); // Sakura Pink
+    addButterfly(0.85, 1.55, -0.15, 0x38bdf8, 0x0284c7, 1.4, 0.48, 2.3);  // Sky Azure
+    addButterfly(0.35, 2.05, 0.25, 0xfbbf24, 0xd97706, 1.1, 0.35, 4.2);  // Monarch Gold
+    addButterfly(-0.45, 1.75, -0.2, 0xc084fc, 0x9333ea, 1.35, 0.45, 5.5); // Violet Lilac
+
+    // Instantiate Sweet Songbirds
+    addBird(-1.15, 1.95, -0.1, 0.95, 0.65, 1.4);
+    addBird(1.10, 2.15, 0.15, 0.85, 0.7, 3.8);
+
+    this.setVisualStyle(this.visualStyle);
   }
 
   async loadCharacter(charType) {
@@ -864,6 +1110,7 @@ export class Pangu3D {
   }
 
   playAction(actionName, fadeDuration = 0.25) {
+    if (!this.stateActions) return;
     const nextAction = this.stateActions[actionName];
     if (!nextAction || nextAction === this.currentAction) return;
 
@@ -1271,7 +1518,13 @@ export class Pangu3D {
     }
 
     const now = performance.now();
-    const delta = Math.min((now - this.lastTime) / 1000, 0.05); // Cap to 50ms to prevent spiral of death
+    const isQuietIdle = this.state === 'IDLE' && !this.isSpeaking && !this.isDragging && !(this.ambientGroup && this.ambientGroup.visible);
+    const targetFps = this.state === 'SLEEPING' ? 15 : (isQuietIdle ? 30 : 60);
+    if (now - this.lastTime < 1000 / targetFps) {
+      this.animId = requestAnimationFrame(() => this.animate());
+      return;
+    }
+    const delta = Math.min((now - this.lastTime) / 1000, 0.1); // Cap long stalls while allowing the 15 FPS sleep cadence
     this.lastTime = now;
     const time = now / 1000;
 
@@ -1309,6 +1562,7 @@ export class Pangu3D {
 
     // 7. Dynamic Particles
     this.updateParticles(delta);
+    this.updateAmbientCompanions(time, delta);
 
     // 8. Synchronize 3D Position with Desktop Pixel Coordinates
     if (this.state === 'IDLE' && !this.isDragging) {
@@ -1334,10 +1588,107 @@ export class Pangu3D {
     this.animId = requestAnimationFrame(() => this.animate());
   }
 
+  updateAmbientCompanions(time, delta = 0.016) {
+    if (!this.ambientGroup || !this.ambientGroup.visible) return;
+
+    // 1. Animate Butterflies & Songbirds
+    if (this.ambientActors) {
+      for (const actor of this.ambientActors) {
+        if (actor.kind === 'butterfly') {
+          // Dynamic 3D Fluttering Flight Path
+          const orbitTime = time * actor.speed + actor.phase;
+          const posX = actor.baseX + Math.sin(orbitTime * 0.9) * actor.radius + Math.cos(orbitTime * 1.8) * 0.12;
+          const posY = actor.baseY + Math.sin(orbitTime * 1.4) * 0.22 + Math.cos(orbitTime * 0.6) * 0.08;
+          const posZ = actor.baseZ + Math.cos(orbitTime * 0.9) * (actor.radius * 0.7);
+
+          actor.actor.position.set(posX, posY, posZ);
+
+          // Flight Banking & Heading Orientation
+          const heading = Math.atan2(Math.cos(orbitTime * 0.9), -Math.sin(orbitTime * 0.9));
+          actor.actor.rotation.y = heading + Math.PI / 2;
+          actor.actor.rotation.z = Math.sin(orbitTime * 1.8) * 0.22; // Banking into turns
+          actor.actor.rotation.x = Math.sin(orbitTime * 1.4) * 0.15; // Pitching up/down
+
+          // Organic Rapid Butterfly Wing Flapping (12-14 Hz flutter)
+          const flap = Math.sin(time * 16.0 + actor.phase * 4.0) * 0.88;
+          if (actor.leftWing && actor.rightWing) {
+            actor.leftWing.rotation.y = Math.PI - flap;
+            actor.rightWing.rotation.y = flap;
+          }
+        } else if (actor.kind === 'bird') {
+          // Graceful Avian Flight & Gliding Loops
+          const orbitTime = time * actor.speed + actor.phase;
+          const posX = actor.baseX + Math.sin(orbitTime * 0.75) * actor.radius;
+          const posY = actor.baseY + Math.sin(orbitTime * 1.2) * 0.14;
+          const posZ = actor.baseZ + Math.cos(orbitTime * 0.75) * (actor.radius * 0.6);
+
+          actor.actor.position.set(posX, posY, posZ);
+
+          // Avian Heading & Bank
+          const heading = Math.atan2(Math.cos(orbitTime * 0.75), -Math.sin(orbitTime * 0.75));
+          actor.actor.rotation.y = heading;
+          actor.actor.rotation.z = Math.sin(orbitTime * 1.5) * 0.18; // Soft banking
+
+          // Hinged Organic Wing Flapping with Gliding Lulls
+          const flapCycle = Math.sin(time * 8.5 + actor.phase);
+          const isGliding = Math.sin(time * 1.2 + actor.phase) > 0.65;
+          const wingAngle = isGliding ? 0.08 : flapCycle * 0.48;
+
+          if (actor.leftWing && actor.rightWing) {
+            actor.leftWing.rotation.z = wingAngle;
+            actor.rightWing.rotation.z = -wingAngle;
+          }
+        }
+      }
+    }
+
+    // 2. Animate Drifting Sakura Flower Petals
+    if (this.sakuraPetals) {
+      for (const p of this.sakuraPetals) {
+        // Fall down with gravity and air resistance
+        p.y -= p.fallSpeed * delta;
+        p.x += Math.sin(time * p.swaySpeed + p.seed) * p.swayRange * delta;
+        p.z += Math.cos(time * (p.swaySpeed * 0.7) + p.seed) * (p.swayRange * 0.5) * delta;
+
+        // Aerodynamic tumbling rotation
+        p.mesh.rotation.x += p.rotSpeedX * delta;
+        p.mesh.rotation.y += p.rotSpeedY * delta;
+        p.mesh.rotation.z += p.rotSpeedZ * delta;
+
+        // Reset seamlessly when reaching floor level
+        if (p.y < -0.65) {
+          p.y = 2.6 + Math.random() * 0.6;
+          p.x = (Math.random() - 0.5) * 3.2;
+          p.z = (Math.random() - 0.5) * 1.8;
+        }
+
+        p.mesh.position.set(p.x, p.y, p.z);
+      }
+    }
+
+    // 3. Animate Shimmering Fairy Dust / Starlight Crystals
+    if (this.fairyDust) {
+      for (const d of this.fairyDust) {
+        const pulse = 0.5 + Math.sin(time * d.pulseSpeed + d.phase) * 0.45;
+        d.mesh.scale.setScalar(0.7 + pulse * 0.6);
+        d.mesh.position.y = d.baseY + Math.sin(time * d.floatSpeed + d.phase) * 0.12;
+      }
+    }
+  }
+
   destroy() {
     if (this.animId) cancelAnimationFrame(this.animId);
     if (this.mixer) this.mixer.stopAllAction();
     if (this.particleGeo) this.particleGeo.dispose();
+    if (this.ambientGroup) {
+      this.ambientGroup.traverse((child) => {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
+          materials.forEach((material) => material.dispose());
+        }
+      });
+    }
     if (this.renderer) {
       this.renderer.dispose();
       if (this.renderer.domElement && this.renderer.domElement.parentNode) {

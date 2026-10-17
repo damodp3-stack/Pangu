@@ -378,15 +378,29 @@ function setupIpcHandlers() {
   });
 
   const ALLOWED_PREFS = new Set([
-    'user_name', 'theme', 'language_preference', 'sound_enabled',
+    'user_name', 'user_age', 'user_gender', 'user_dob', 'companion_bond', 'theme', 'language_preference', 'sound_enabled',
     'activity_level', 'screen_permission', 'mic_permission', 'camera_permission',
-    'character', 'voice_mode', 'celestial_wings'
+    'character', 'voice_mode', 'celestial_wings', 'companion_presentation',
+    'conversation_style', 'visual_style', 'onboarding_complete'
   ]);
 
   ipcMain.handle('preferences:set', (event, key, value) => {
     if (typeof key !== 'string' || !ALLOWED_PREFS.has(key)) return false;
     if (typeof value !== 'string' && typeof value !== 'boolean' && typeof value !== 'number') return false;
-    const safeVal = String(value).slice(0, 500);
+    const safeVal = String(value).slice(0, key === 'user_name' ? 60 : 500);
+    if (key === 'user_age' && safeVal !== '' && (!/^\d{1,3}$/.test(safeVal) || Number(safeVal) < 1 || Number(safeVal) > 120)) return false;
+    if (key === 'user_dob' && safeVal !== '') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(safeVal)) return false;
+      const parsedDate = new Date(`${safeVal}T00:00:00`);
+      if (Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== safeVal || parsedDate > new Date()) return false;
+    }
+    if (key === 'user_gender' && !['', 'woman', 'female', 'man', 'male', 'nonbinary', 'prefer_not_to_say'].includes(safeVal.toLowerCase())) return false;
+    if (key === 'companion_bond' && !['sister', 'bestie', 'brother', 'pet', 'mentor'].includes(safeVal.toLowerCase())) return false;
+    if (key === 'companion_presentation' && !['feminine', 'masculine', 'neutral'].includes(safeVal)) return false;
+    if (key === 'conversation_style' && !['friendly', 'calm', 'playful', 'direct', 'supportive'].includes(safeVal)) return false;
+    if (key === 'language_preference' && !['tanglish', 'tamil', 'english', 'hindi'].includes(safeVal)) return false;
+    if (key === 'visual_style' && !['classic', 'celestial_garden'].includes(safeVal)) return false;
+    if (key === 'onboarding_complete' && !['true', 'false'].includes(safeVal)) return false;
     memory.setPreference(key, safeVal);
     return true;
   });

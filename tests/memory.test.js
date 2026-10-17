@@ -34,7 +34,7 @@ describe('PanguMemory SQLite Core', () => {
 
   test('initializes default preferences, memories, and pet stats', () => {
     const prefs = memory.getAllPreferences();
-    assert.equal(prefs.user_name, 'Damo');
+    assert.equal(prefs.user_name, '');
     assert.equal(prefs.theme, 'dark');
 
     const stats = memory.getPetStats();

@@ -30,26 +30,32 @@
    - **Acrobatic Moves:** 360° somersault backflips, superhero landings, and sleepy ball curling.
 
 3. **🧠 GOOGLE-TIER MULTIMODAL COGNITIVE BRAIN**
-   - **Tanglish AI Best Friend:** Powered by official `@google/genai` with deep conversational empathy, humor, and brotherly tone (*"da"*, *"machi"*, *"thozha"*).
+   - **Personalized Companion Onboarding:** 6-step interactive onboarding to customize user name, birthday/DOB, relationship bond (*Caring Sister / Thangom*, *Loyal Bestie / Machi*, *Playful Pet*, *Digital Mentor*), and 3D visual atmosphere.
+   - **Gender & Persona Adaptive AI:** Cognitive prompts and responses adapt to the user's personality, dynamic, and birthday celebrations.
+   - **Multilingual Support:** Conversational support across Tanglish (Tamil + English), Tamil, Hindi, and English.
    - **Multi-Turn Normalization:** Built-in message turn-taking normalizer prevents API cycle errors.
    - **Offline Fallback Brain:** Works 100% offline with zero setup required.
    - **📁 Drag & Drop Multimodal Ingestion:** Drag screenshots (`.png`, `.jpg`, `.webp`) or code files (`.js`, `.py`, `.html`, etc.) directly onto Pangu's 3D body for instant feedback.
 
-4. **🍅 FOCUS BUDDY (POMODORO TIMER)**
+4. **🌸 CELESTIAL GARDEN & 3D ATMOSPHERES**
+   - **Celestial Garden:** Surrounds Pangu with 3D animated butterflies with fluttering wings, hovering songbirds, and floating Sakura cherry blossom petals.
+   - **Classic Companion:** Clean, minimalist high-performance desktop mode.
+
+5. **🍅 FOCUS BUDDY (POMODORO TIMER)**
    - Start 25-minute deep work sessions directly from the context menu.
    - A floating timer anchors above Pangu while it guards your desktop.
    - Awards **+50 XP** upon completion with celebratory fanfare!
 
-5. **🎮 DESKTOP MINI-GAMES & TOYS**
+6. **🎮 DESKTOP MINI-GAMES & TOYS**
    - 🔴 **Laser Pointer Chase (`L` or Menu):** High-speed 280 px/s sprint chase to pounce on the glowing red laser dot.
    - 🎾 **Bouncy Toy Ball Fetch (`B` or Menu):** Real physical gravity, boundary bounces, and batting animations.
    - 🖥️ **Multi-Monitor Roaming (`Tab` or Menu):** Seamlessly leaps between multiple physical monitors.
 
-6. **⚔️ RPG FRIENDSHIP PROGRESSION**
+7. **⚔️ RPG FRIENDSHIP PROGRESSION**
    - Earn XP from petting, chatting, screen vision, mini-games, and focus sessions.
    - Unlock 6 prestige titles from *Novice Companion* to *Mythic Desktop Guardian*.
 
-7. **⚡ 4 ELEMENTAL MAGIC AURAS**
+8. **⚡ 4 ELEMENTAL MAGIC AURAS**
    - 🔥 **Fire Obsidian:** Floating ember sparks and heat shimmer.
    - ⚡ **Thunder Lightning:** Electric cyan & gold crackling sparks.
    - ❄️ **Frost Crystal:** Crystalline snowflakes and soft frost vapor.
@@ -82,7 +88,7 @@ To enable cloud intelligence and screen vision:
 1. Obtain a free key from [Google AI Studio](https://aistudio.google.com).
 2. Right-click Pangu -> **⚙️ Settings & API Key** -> Paste key -> **Save**.
 ### 4. Running Automated Tests
-Run the verified 23-test regression suite:
+Run the verified 28-test regression suite:
 ```bash
 npm test
 ```

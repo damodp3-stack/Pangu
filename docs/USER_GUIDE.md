@@ -12,8 +12,22 @@ Welcome to **PANGU** — your 3D Native AI Desktop Best Friend! This guide cover
   ```bash
   npm start
   ```
+### 2. First-Time Companion Onboarding
+On your first launch, Pangu greets you with a friendly, companion-led interactive setup wizard:
+1. **Name:** Tell Pangu what you'd like to be called.
+2. **Birthday / DOB:** Enter your date of birth so Pangu can remember your special day and throw celebratory flip parties with sweet treats!
+3. **Gender & Persona:** Select your identity so Pangu can address you naturally with genuine affection and respect.
+4. **Companion Relationship & Vibe:** Choose your ideal dynamic:
+   - 🌸 **Sweet Caring Sister / Thangom:** Warm, protective, and deeply encouraging.
+   - 🤝 **Loyal Best Friend / Machi:** High-energy, witty, and brotherly camaraderie.
+   - 🐾 **Cuddly Desktop Pet:** Cute purrs, playful acrobatics, and relaxing company.
+   - 💡 **Digital Partner / Mentor:** Calm, supportive, and focused.
+5. **3D Atmosphere:** Choose between the tranquil **Celestial Garden** (with fluttering 3D butterflies, songbirds & drifting cherry petals) or **Classic Companion**.
+6. **Mascot & Language:** Select your 3D mascot (Kitsune Fox, Sellsword Fox, Cyber Dragon, Shadow Kitty) and reply language (Tanglish, Tamil, Hindi, English).
 
-### 2. Setting Up Your Google Gemini API Key (Optional but Recommended)
+You can change any of these preferences at any time by right-clicking Pangu and choosing **⚙️ Settings & API Key**.
+
+### 3. Setting Up Your Google Gemini API Key (Optional but Recommended)
 Pangu works 100% offline with its built-in friendly companion brain, but connecting a free Gemini API key unlocks Google-tier intelligence, screen vision, and code reviews!
 
 1. Get a free API key from [Google AI Studio](https://aistudio.google.com).

@@ -120,12 +120,19 @@ CREATE TABLE preferences (
 );
 ```
 Standard keys:
-- `user_name`: Name of user (default: `"Damo"`).
+- `user_name`: Name of user.
+- `user_dob`: User date of birth / birthday (ISO `YYYY-MM-DD`).
+- `user_age`: User age string.
+- `user_gender`: User gender identity (`"female"`, `"male"`, `"neutral"`).
+- `companion_bond`: Relationship dynamic (`"sister"`, `"bestie"`, `"brother"`, `"pet"`, `"mentor"`).
 - `theme`: `"dark"` (Fire Obsidian) or `"light"` (Frost Celestial).
 - `character`: `"fox"`, `"sellsword_fox"`, `"dragon"`, `"cat"`.
+- `visual_style`: `"classic"`, `"celestial_garden"`.
 - `sound_enabled`: `"true"` | `"false"`.
 - `voice_mode`: `"acoustic"`, `"tts"`, `"both"`.
 - `celestial_wings`: `"true"` | `"false"`.
+- `language_preference`: `"tanglish"`, `"tamil"`, `"hindi"`, `"english"`.
+- `onboarding_complete`: `"true"` | `"false"`.
 
 ### 2. `pet_stats`
 Stores companion state and RPG progression:

@@ -7,6 +7,7 @@ import { DragDropManager } from '../modules/drag_drop.js';
 import { DisplayManager } from '../modules/display_manager.js';
 import { SettingsModal } from '../modules/settings_modal.js';
 import { MenuManager } from '../modules/menu_manager.js';
+import { OnboardingWizard } from '../modules/onboarding_wizard.js';
 
 /**
  * PANGU 3D Application Controller (Modularized Architecture)
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const laserPointerEl = document.getElementById('pangu-laser-pointer');
   const toyBallEl = document.getElementById('pangu-toy-ball');
   const settingsModalEl = document.getElementById('settings-modal');
+  const onboardingModalEl = document.getElementById('pangu-onboarding-modal');
   const focusPill = document.getElementById('pangu-focus-pill');
   const focusTimeDisplay = document.getElementById('focus-time-display');
   const focusStopBtn = document.getElementById('focus-stop-btn');
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let soundEnabled = preferences.sound_enabled !== 'false';
   let voiceMode = preferences.voice_mode || 'both'; // 'acoustic', 'tts', 'both'
   let wingsEnabled = preferences.celestial_wings === 'true';
+  let visualStyle = preferences.visual_style || 'classic';
   let currentAura = petStats.elemental_aura || 'fire';
 
   if (window.soundFX) window.soundFX.setEnabled(soundEnabled);
@@ -82,6 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pangu = new Pangu3D(container, {
     theme: currentTheme,
     character: currentCharacter,
+    visualStyle,
     aura: wingsEnabled,
     elementalAura: currentAura
   });
@@ -172,6 +176,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         pangu.setCharacter(updated.character);
         menuManager.updateCharacterUI(updated.character);
       }
+      visualStyle = updated.visualStyle || 'classic';
+      preferences = { ...preferences, ...(updated.profile || {}), user_name: updated.userName };
+      pangu.setVisualStyle(visualStyle);
+      menuManager.updateGardenUI(visualStyle === 'celestial_garden');
+    }
+  });
+
+  const onboardingWizard = new OnboardingWizard({
+    wizardEl: onboardingModalEl,
+    panguAPI,
+    pangu,
+    speechEngine,
+    soundFX: window.soundFX,
+    onComplete: (data) => {
+      preferences = { ...preferences, ...data };
+      currentCharacter = data.character;
+      visualStyle = data.visual_style;
+      menuManager.updateCharacterUI(currentCharacter);
+      menuManager.updateGardenUI(visualStyle === 'celestial_garden');
     }
   });
 
@@ -190,7 +213,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         soundEnabled,
         voiceMode,
         wingsEnabled,
-        currentTheme
+        currentTheme,
+        preferences
       });
     },
     toggleSound: async () => {
@@ -232,10 +256,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   menuManager.updateWingsUI(wingsEnabled);
   menuManager.updateCharacterUI(currentCharacter);
   menuManager.updateSoundUI(soundEnabled);
+  menuManager.updateGardenUI(visualStyle === 'celestial_garden');
   menuManager.refreshPetRpgUI();
 
+  if (preferences.onboarding_complete !== 'true') {
+    onboardingWizard.open();
+  }
+
   // 4. Mouse Event Pass-Through System
-  const interactiveElements = [hitBox, speechBubble, talkPill, talkVisionBtn, talkMicBtn, radialMenu, settingsModalEl, focusPill];
+  const interactiveElements = [hitBox, speechBubble, talkPill, talkVisionBtn, talkMicBtn, radialMenu, settingsModalEl, onboardingModalEl, focusPill];
 
   interactiveElements.forEach((el) => {
     if (!el) return;
@@ -346,15 +375,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function onPetInteraction() {
-    const userName = preferences.user_name || 'Damo';
-    const phrases = [
-      `Hi ${userName}! Enna help venum machi? Naan un koodave irukken! ♡`,
-      "Purrrr... Screen-la naan un koodave irukken, thozha! 🐾",
-      "Innaiku super-aa code panni mudikkanum, da! 🚀✨",
-      `Hey ${userName}! Sema energy! Let's build something epic! 😄🔥`,
-      "Aww thanks da! Un kooda irukardhu romba santhosham! ✨",
-      `Enna yosikira, ${userName}? Share pannu, serndhu solve pannuvom! 💡`
-    ];
+    const userName = preferences.user_name || 'friend';
+    const language = preferences.language_preference || 'tanglish';
+    const phraseSets = {
+      tanglish: [`Hi ${userName}! Enna help venum? Naan un koodave irukken! ♡`, `Purrr... Naan un koodave irukken! 🐾`, `Hey ${userName}! Enna yosikira? Share pannu, serndhu solve pannuvom! 💡`],
+      tamil: [`வணக்கம் ${userName}! என்ன உதவி வேண்டும்? நான் உன்னுடன் இருக்கிறேன். ♡`, `நான் இங்கே உன்னுடன் இருக்கிறேன்! 🐾`, `${userName}, என்ன யோசிக்கிறாய்? சொல்லு, சேர்ந்து தீர்வு காணலாம். 💡`],
+      hindi: [`नमस्ते ${userName}! क्या मदद चाहिए? मैं तुम्हारे साथ हूँ। ♡`, `मैं यहीं तुम्हारे साथ हूँ! 🐾`, `${userName}, क्या सोच रहे हो? बताओ, मिलकर हल निकालेंगे। 💡`],
+      english: [`Hi ${userName}! What can I help with? I'm right here. ♡`, `I'm here with you! 🐾`, `What are you thinking about, ${userName}? Tell me and we'll work it out. 💡`]
+    };
+    const phrases = phraseSets[language] || phraseSets.tanglish;
     const picked = phrases[Math.floor(Math.random() * phrases.length)];
     pangu.reactTouch();
     speechEngine.showSpeech(picked, 4500, 'happy');
@@ -420,7 +449,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function handleVisionInspect(customQuery = '') {
     menuManager.close();
     closeTalkPill();
-    speechEngine.showSpeech("Inspecting your screen, Damo... 👀", 3500, 'normal');
+    speechEngine.showSpeech(`Inspecting your screen, ${preferences.user_name || 'friend'}... 👀`, 3500, 'normal');
     pangu.setThinking(true);
     pangu.triggerHabit('SURVEY_DESKTOP');
     if (window.soundFX) window.soundFX.playCurious();
@@ -553,9 +582,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 13. Startup Greeting
-  setTimeout(() => {
-    const userName = preferences.user_name || 'Damo';
-    speechEngine.showSpeech(`Hey ${userName}! Let's build something amazing together! ♡`, 4500);
-    pangu.jump();
-  }, 1200);
+  if (preferences.onboarding_complete === 'true') {
+    setTimeout(() => {
+      const userName = preferences.user_name || 'friend';
+      const greetings = {
+        tanglish: `Hey ${userName}! Let's build something amazing together! ♡`,
+        tamil: `வணக்கம் ${userName}! சேர்ந்து அற்புதமான ஒன்றை உருவாக்கலாம்! ♡`,
+        hindi: `नमस्ते ${userName}! चलो मिलकर कुछ शानदार बनाते हैं! ♡`,
+        english: `Hi ${userName}! Let's build something amazing together! ♡`
+      };
+      speechEngine.showSpeech(greetings[preferences.language_preference] || greetings.tanglish, 4500);
+      pangu.jump();
+    }, 1200);
+  }
 });

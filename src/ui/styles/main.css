@@ -268,7 +268,9 @@ html, body {
 }
 
 .modal-card {
-  width: 440px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: 88vh;
+  overflow-y: auto;
   padding: 24px;
   border-radius: 20px;
   background: var(--bg-panel);
@@ -279,6 +281,32 @@ html, body {
   flex-direction: column;
   gap: 16px;
   color: var(--text-primary);
+}
+
+.profile-setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-panel);
+}
+
+.profile-setup-section h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.profile-privacy-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profile-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .modal-header {
@@ -563,3 +591,188 @@ html, body {
     box-shadow: 0 0 10px #ef4444, 0 0 22px rgba(239, 68, 68, 0.9);
   }
 }
+
+/* =========================================
+   Interactive Companion Onboarding Wizard
+   ========================================= */
+
+.onboarding-card {
+  width: 490px;
+  max-width: 92vw;
+  padding: 22px 24px;
+}
+
+.onboard-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.onboard-avatar-badge {
+  font-size: 26px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-gradient);
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 16px var(--character-glow);
+  flex-shrink: 0;
+  animation: companionFloat 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes companionFloat {
+  0% { transform: translateY(0px) scale(0.96); }
+  100% { transform: translateY(-4px) scale(1.04); }
+}
+
+.onboard-speech-wrap {
+  flex: 1;
+}
+
+.onboard-speech-bubble {
+  background: var(--bg-bubble);
+  border: 1px solid var(--border-bubble);
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.onboard-speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: -8px;
+  border-width: 6px 8px 6px 0;
+  border-style: solid;
+  border-color: transparent var(--border-bubble) transparent transparent;
+}
+
+.onboard-progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.onboard-progress-fill {
+  height: 100%;
+  width: 16.6%;
+  background: var(--accent-gradient);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.onboard-step-indicator {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.onboard-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.onboard-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-input);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.onboard-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-glow);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.onboard-card.selected {
+  border-color: var(--accent-glow);
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3), inset 0 0 12px rgba(56, 189, 248, 0.08);
+}
+
+.card-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.onboard-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.onboard-badge-preview {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-glow);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.onboard-mascots-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.onboard-mascot-pill {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-input);
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.onboard-mascot-pill:hover {
+  border-color: var(--accent-glow);
+}
+
+.onboard-mascot-pill.selected {
+  border-color: var(--accent-glow);
+  background: rgba(56, 189, 248, 0.16);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+

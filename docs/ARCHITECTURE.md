@@ -81,6 +81,7 @@ PANGU was engineered to solve the "Chatbot Box Problem" — where traditional AI
 |   |   - DisplayManager     : Multi-monitor leap & virtual canvas span      |   |
 |   |   - VoiceInputManager  : Web Speech STT microphone input               |   |
 |   |   - SettingsModal      : Custom mascots, audio toggles & API key modal |   |
+|   |   - OnboardingWizard   : 6-step companion-led onboarding & persona setup|  |
 |   +------------------------------------------------------------------------+   |
 |                                                                                |
 +--------------------------------------------------------------------------------+

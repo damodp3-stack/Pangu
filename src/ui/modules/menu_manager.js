@@ -32,6 +32,8 @@ export class MenuManager {
     this.soundText = document.getElementById('menu-sound-text');
     this.wingsIcon = document.getElementById('menu-wings-icon');
     this.wingsText = document.getElementById('menu-wings-text');
+    this.gardenIcon = document.getElementById('menu-garden-icon');
+    this.gardenText = document.getElementById('menu-garden-text');
     this.roamText = document.getElementById('menu-roam-text');
     this.sleepIcon = document.getElementById('menu-sleep-icon');
     this.sleepText = document.getElementById('menu-sleep-text');
@@ -93,6 +95,25 @@ export class MenuManager {
       menuWings.addEventListener('click', () => {
         this.close();
         this.toggleWings();
+      });
+    }
+
+    // Menu: 3D Garden (Butterflies, Birds & Sakura Petals)
+    const menuGarden = document.getElementById('menu-garden');
+    if (menuGarden) {
+      menuGarden.addEventListener('click', async () => {
+        this.close();
+        if (!this.pangu) return;
+        const nextStyle = this.pangu.toggleGarden();
+        const isGarden = nextStyle === 'celestial_garden';
+        if (this.panguAPI) await this.panguAPI.setPreference('visual_style', nextStyle);
+        this.updateGardenUI(isGarden);
+        if (isGarden) {
+          this.showSpeech("3D Garden activated! 🌸 Butterflies, birds & sakura blossoms are here! ♡", 4500, 'excited');
+          if (this.soundFX) this.soundFX.playHappyChime();
+        } else {
+          this.showSpeech("Classic companion mode active! 🐾", 3000);
+        }
       });
     }
 
@@ -284,6 +305,11 @@ export class MenuManager {
   updateWingsUI(enabled) {
     if (this.wingsIcon) this.wingsIcon.textContent = enabled ? '🪽' : '✨';
     if (this.wingsText) this.wingsText.textContent = enabled ? 'Celestial Wings: ON' : 'Celestial Wings: OFF';
+  }
+
+  updateGardenUI(enabled) {
+    if (this.gardenIcon) this.gardenIcon.textContent = enabled ? '🌸' : '🌿';
+    if (this.gardenText) this.gardenText.textContent = enabled ? '3D Garden: ON 🌸' : '3D Garden: OFF';
   }
 
   syncCoordinates(screenX, screenY) {

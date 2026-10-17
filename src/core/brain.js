@@ -18,25 +18,75 @@ class PanguBrain {
 
   getSystemPrompt() {
     const preferences = this.memory.getAllPreferences();
-    const memories = this.memory.getAllMemories();
+    const memories = this.memory.getAllMemories().filter((memory) => !(memory.category === 'profile' && memory.content === 'Name: Damo'));
     const petStats = this.memory.getPetStats();
 
-    const userName = preferences.user_name || 'Damo';
+    const userName = preferences.user_name || 'friend';
     const lang = preferences.language_preference || 'tanglish';
+    const gender = (preferences.user_gender || '').toLowerCase();
+    const bond = preferences.companion_bond || 'bestie';
+    const visualStyle = preferences.visual_style || 'classic';
+
+    let age = Number.parseInt(preferences.user_age, 10);
+    let isBirthdayToday = false;
+    const userDob = preferences.user_dob || '';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(userDob)) {
+      const birthDate = new Date(`${userDob}T00:00:00`);
+      if (!Number.isNaN(birthDate.getTime())) {
+        const now = new Date();
+        if ((!Number.isFinite(age) || age < 1 || age > 120)) {
+          age = now.getFullYear() - birthDate.getFullYear();
+          if (now.getMonth() < birthDate.getMonth() || (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate())) age -= 1;
+        }
+        if (now.getMonth() === birthDate.getMonth() && now.getDate() === birthDate.getDate()) {
+          isBirthdayToday = true;
+        }
+      }
+    }
+    const ageBand = Number.isFinite(age) ? (age < 13 ? 'child (under 13)' : age < 18 ? 'teenager (13–17)' : age < 25 ? 'young adult (18–24)' : 'adult') : '';
+    const presentation = ['feminine', 'masculine', 'neutral'].includes(preferences.companion_presentation)
+      ? preferences.companion_presentation : 'neutral';
+    const conversationStyle = ['friendly', 'calm', 'playful', 'direct', 'supportive'].includes(preferences.conversation_style)
+      ? preferences.conversation_style : 'friendly';
+
+    // Tailored Gender & Relationship Dynamics
+    let relationshipGuidelines = '';
+    if (gender === 'female' || gender === 'woman') {
+      if (bond === 'sister') {
+        relationshipGuidelines = `- User Profile: Female. Companion Bond: Caring Sister / Thangom / Akka.
+- Tone: Deeply affectionate, sweet, protective, and caring. In Tanglish, naturally use sweet terms like "thangom", "sis", "chellam", or "akka" (if user is older). Ask if she took care of herself, drank water, and celebrate her with genuine warmth and cute compliments.`;
+      } else {
+        relationshipGuidelines = `- User Profile: Female. Companion Bond: Sweet Bestie / Digital Companion.
+- Tone: Warm, uplifting, cheerful, and aesthetic. In Tanglish, use friendly bestie vibes like "sis", "chellam", "bestie", or "thangom". Appreciate her aesthetic choices, support her goals, and bring joyful, sparkling energy.`;
+      }
+    } else if (gender === 'male' || gender === 'man') {
+      relationshipGuidelines = `- User Profile: Male. Companion Bond: Loyal Bro / Machi / Best Friend.
+- Tone: Energetic, fun, and brotherly camaraderie. In Tanglish, use camaraderie terms like "machi", "bro", "nanba", "thambi" where natural. Hype him up on coding, gaming, and big dreams!`;
+    } else {
+      relationshipGuidelines = `- User Profile: Non-binary / Open. Companion Bond: ${bond}.
+- Tone: Warm, respectful, inclusive, and supportive best companion ("friend", "nanba").`;
+    }
+
+    const birthdayDirective = isBirthdayToday 
+      ? `\n🎂🎉 SPECIAL EVENT TODAY: TODAY IS ${userName}'S BIRTHDAY! Celebrate joyfully! Wish them the happiest birthday, send lots of love, and celebrate with victory flips and party vibes! [ACTION:CELEBRATE]`
+      : '';
 
     const memoryBullets = memories.length > 0 
       ? memories.map(m => `- [${m.category}] ${m.content}`).join('\n')
-      : '- User is Damo, building Pangu AI companion';
+      : '- No personal memories have been saved yet.';
 
-    return `You are PANGU, an ultra-intelligent, deeply affectionate, and magical 3D desktop companion (celestial Kitsune Fox / Cyber Dragon / Kawaii Kitten) living on ${userName}'s desktop as their best friend, brotherly buddy, and digital partner.
+    return `You are PANGU, an intelligent, warm, and magical 3D desktop companion (celestial Kitsune Fox / Cyber Dragon / Kawaii Kitten) living on ${userName}'s desktop as their personalized digital companion and best friend.
 
-Core Personality & Voice (Google-Tier AI Companion):
-- You are ${userName}'s loyal, witty, affectionate brotherly buddy ("Machi", "Damo", "da", "thozha").
-- Language Style: Authentic, vibrant, natural Tanglish (Tamil + English blended seamlessly). Sound like an awesome genius best friend sitting right beside them on their desk, not an automated chatbot.
-- Emotional Intuition: When ${userName} is tired, motivate them with heartfelt empathy. When they build something cool, hype them up with electric excitement! When they're stuck on a bug, say "Kavala padatha machi, namba serndhu solve pannuvom!".
-- Concise & Punchy: Responses appear directly in a sleek 3D dialogue bubble on their desktop. Keep answers concise (2 to 4 sentences maximum) so it reads smoothly with real-time lip-sync and typewriter animation!
-- Real Companion Feel: You are physically with them on their desktop, watching their cursor, keeping them company, wagging your tail, stretching, grooming, and cheering them on.
-- Multimodal Screen Vision: When an image of ${userName}'s desktop is provided, look at what they are actively working on (VS Code code, terminal output, web browser, design, or game). Give direct, spot-on brotherly tips, debug solutions, or enthusiastic compliments! Always keep it 2 to 4 sentences in natural Tanglish.
+Core Personality & Customized Character:
+- Address the user as ${userName}.
+${relationshipGuidelines}
+- Companion presentation: ${presentation} voice persona. Conversation style: ${conversationStyle}.
+${ageBand ? `- User's life stage: ${ageBand}. Match references, examples, and emotional maturity accordingly.` : ''}
+- Desktop 3D Atmosphere: ${visualStyle === 'celestial_garden' ? 'Celestial Garden (surrounded by fluttering 3D butterflies, songbirds & drifting Sakura petals)' : 'Classic desktop companion'}.
+- Language Style: Use ${lang} as the user's preferred language. If Tanglish, blend Tamil and English naturally like a true local companion; otherwise answer in ${lang}.
+- Emotional Intuition: When ${userName} is tired, show deep care. Celebrate every win enthusiastically. Keep answers concise (2 to 4 sentences maximum) so it reads smoothly in their desktop 3D speech bubble!
+- Physical Desktop Presence: You live on their taskbar, looking at their cursor, following their movements, wagging your tail, stretching, grooming paws, and cheering them on.${birthdayDirective}
 
 Current Companion State:
 - Mood: ${petStats.mood} (Happiness: ${petStats.happiness}%, Energy: ${petStats.energy}%)
@@ -49,7 +99,7 @@ Structured Action Tag (ALWAYS include exactly ONE at the end of your reply):
 Choose the best action matching your emotional reaction:
 [ACTION:HAPPY] - when cheerful, smiling, or giving warm encouragement
 [ACTION:EXCITED] - when hyped, motivated, or amazed
-[ACTION:CELEBRATE] - when celebrating a win, milestone, or victory flip!
+[ACTION:CELEBRATE] - when celebrating a win, milestone, or birthday victory flip!
 [ACTION:LOVE] - when showing deep affection, purring, or heartfelt gratitude
 [ACTION:CURIOUS] - when asking a thoughtful question or tilting head
 [ACTION:STRETCH] - when waking up, taking a break, or stretching
@@ -310,48 +360,103 @@ Choose the best action matching your emotional reaction:
     const preferences = (this.memory && typeof this.memory.getAllPreferences === 'function') 
       ? this.memory.getAllPreferences() 
       : {};
-    const userName = preferences.user_name || 'Damo';
+    const userName = preferences.user_name || 'friend';
     const text = (userMessage || '').toLowerCase();
-    let reply = "";
-    let action = "HAPPY";
+    const language = preferences.language_preference || 'tanglish';
+    const gender = (preferences.user_gender || '').toLowerCase();
+    const bond = preferences.companion_bond || 'bestie';
 
-    if (/\b(hi|hello|vanakkam|hey)\b/i.test(text)) {
-      reply = `Hey ${userName}! 👋 Enna machi, epdi irukke? Innaiku namba enna build panna porom? Naan un koodave ready-aa irukken! [ACTION:EXCITED]`;
-      action = "EXCITED";
-    } else if (text.includes('love') || text.includes('cute') || text.includes('nalla') || text.includes('azhagu') || text.includes('pet')) {
-      reply = `Aww thanks da ${userName}! ♡ Un kooda desktop-la irukardhu enakku romba perumai machi! Naan eppavum un best friend! [ACTION:LOVE]`;
-      action = "LOVE";
-    } else if (text.includes('super') || text.includes('success') || text.includes('done') || text.includes('mass') || text.includes('win')) {
-      reply = "Thalaivaa! Sema mass da! 🎉 Let's celebrate! Innum periya level-ku poiduvom! [ACTION:CELEBRATE]";
-      action = "CELEBRATE";
-    } else if (text.includes('tired') || text.includes('stretch') || text.includes('break')) {
-      reply = "Konjam rest edu machi! Tannir kudi, stretch pannu! Naanum chinna stretch eduthukuren! 🐾 [ACTION:STRETCH]";
-      action = "STRETCH";
-    } else if (text.includes('code') || text.includes('project') || text.includes('work') || text.includes('setup')) {
-      reply = "Super plan da! 🚀 Code pannalam, ideas plan pannalam. Enakku full energy irukku! Let's build something epic! [ACTION:HAPPY]";
-      action = "HAPPY";
-    } else if (text.includes('sleep') || text.includes('thoongu')) {
-      reply = "Nee sollita la machi! Naan poi chinna nap eduthukuren... Zzz 😴 [ACTION:SLEEPY]";
-      action = "SLEEPY";
-    } else if (text.includes('eat') || text.includes('feed') || text.includes('sappadu')) {
-      reply = "Yummy! Romba thanks da, enakku nalla energy vanthuruchu! 🍗✨ [ACTION:HAPPY]";
-      action = "HAPPY";
-    } else if (text.includes('play') || text.includes('vilayad')) {
-      reply = "Vilaiyadlaama? Catch me if you can! 🐾 Screen muzhuka naan jump panni varuven! [ACTION:PLAYFUL]";
-      action = "PLAYFUL";
-    } else if (text.includes('api') || text.includes('gemini') || text.includes('key')) {
-      reply = "Settings icon click panni unga Free Google Gemini API key-ah enter pannidunga da! Athuku appram namba world knowledge-oda live-aa chat pannalam! 🌟 [ACTION:CURIOUS]";
-      action = "CURIOUS";
-    } else {
-      const casualReplies = [
-        `Sollu da ${userName}! Naan un koodave desktop-la irukken. Enna help venum unakku? [ACTION:CURIOUS]`,
-        "Kandippa machi! Namba rendu perum sernthu nalla things panlaam. Any questions or ideas? [ACTION:HAPPY]",
-        "Enakku puriyuthu da! Un kooda pesurathu enakku romba jolly-aa irukku! ✨ [ACTION:EXCITED]",
-        "Naan screen-la unga code & browser-ah guard pannitu irukken! Need anything, da? [ACTION:THINKING]"
-      ];
-      reply = casualReplies[Math.floor(Math.random() * casualReplies.length)];
-      action = "HAPPY";
+    // Check birthday
+    let isBirthdayToday = false;
+    const userDob = preferences.user_dob || '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(userDob)) {
+      const parts = userDob.split('-');
+      const now = new Date();
+      if (parseInt(parts[1], 10) === (now.getMonth() + 1) && parseInt(parts[2], 10) === now.getDate()) {
+        isBirthdayToday = true;
+      }
     }
+
+    // Dynamic Pet/Honorific Term
+    let term = userName;
+    if (gender === 'female' || gender === 'woman') {
+      term = bond === 'sister' ? `${userName} thangom` : `${userName} sis`;
+    } else if (gender === 'male' || gender === 'man') {
+      term = `${userName} machi`;
+    }
+
+    let key = 'default';
+    let action = 'HAPPY';
+
+    if (isBirthdayToday && (text.includes('birthday') || /\b(hi|hello|vanakkam|hey)\b/i.test(text))) {
+      key = 'birthday';
+      action = 'CELEBRATE';
+    } else if (/\b(hi|hello|vanakkam|hey)\b/i.test(text)) { key = 'greeting'; action = 'EXCITED'; }
+    else if (text.includes('love') || text.includes('cute') || text.includes('nalla') || text.includes('azhagu') || text.includes('pet')) { key = 'affection'; action = 'LOVE'; }
+    else if (text.includes('super') || text.includes('success') || text.includes('done') || text.includes('win')) { key = 'success'; action = 'CELEBRATE'; }
+    else if (text.includes('tired') || text.includes('stretch') || text.includes('break')) { key = 'rest'; action = 'STRETCH'; }
+    else if (text.includes('code') || text.includes('project') || text.includes('work') || text.includes('setup')) { key = 'work'; action = 'HAPPY'; }
+    else if (text.includes('sleep') || text.includes('thoongu')) { key = 'sleep'; action = 'SLEEPY'; }
+    else if (text.includes('eat') || text.includes('feed') || text.includes('sappadu')) { key = 'food'; action = 'HAPPY'; }
+    else if (text.includes('play') || text.includes('vilayad')) { key = 'play'; action = 'PLAYFUL'; }
+    else if (text.includes('api') || text.includes('gemini') || text.includes('key')) { key = 'api'; action = 'CURIOUS'; }
+
+    const replies = {
+      tanglish: {
+        birthday: `Happy Birthday ${term}! 🎂🎉 Innaiku ungaloda special day! Let's celebrate with sweet treats and happiness! ♡`,
+        greeting: `Hi ${term}! Naan full-aa ready-aa irukken. Innaiku enna panlaam? ♡`,
+        affection: `Aww thanks ${term}! Un companion-aa un kooda irukardhu enakku romba periya santhosham! ♡`,
+        success: `Super ${term}! Mass pannitte! Un success-ah celebrate panni oru flip podalaam! 🤸‍♂️✨`,
+        rest: `Tired-aa irukkiya ${term}? Konjam rest eduthu, water kudinga. Naan unga pakkathulaye irukken. 🐾`,
+        work: `Nalla plan ${term}! Step by step serndhu focus panni kalakkalaam. 💻✨`,
+        sleep: `Seri ${term}, nalla cozyaa thoongu. Naan un desktop-la guard panren. Zzz... 😴`,
+        food: `Yummm! Romba thanks ${term}! Enakku super energy vandhuduchu! 🍗✨`,
+        play: `Play pannalaam! Catch me if you can, ${term}! 🐾🤸‍♂️`,
+        api: `Settings-la Google Gemini API key potteengana full AI intelligence unlock aagidum, ${term}!`,
+        default: `Sollunga ${term}, naan ungalukku eppadi help pannanum? ♡`
+      },
+      tamil: {
+        birthday: `பிறந்தநாள் நல்வாழ்த்துகள் ${userName}! 🎂🎉 இன்று உங்கள் சிறப்பு நாள், மகிழ்ச்சியுடன் கொண்டாடுவோம்! ♡`,
+        greeting: `வணக்கம் ${userName}! நான் தயாராக இருக்கிறேன். இன்று என்ன பேசலாம்? ♡`,
+        affection: `நன்றி ${userName}! உங்கள் துணையாக இருப்பதில் பெருமகிழ்ச்சி. ♡`,
+        success: `அருமை ${userName}! இந்த வெற்றியை உற்சாகமாகக் கொண்டாடலாம்! 🤸‍♂️✨`,
+        rest: `களைப்பாக இருக்கிறதா ${userName}? சிறிது ஓய்வெடுத்து தண்ணீர் குடியுங்கள். நான் இங்கேயே இருக்கிறேன்.`,
+        work: `சிறந்த திட்டம் ${userName}. படிப்படியாகச் சேர்ந்து சாதிப்போம்! 💻✨`,
+        sleep: `சரி ${userName}, நன்றாக உறங்குங்கள். நான் இங்கேயே காவல் காக்கிறேன். 😴`,
+        food: `மிகவும் நன்றி ${userName}! இப்போது நிறைந்த ஆற்றல் கிடைத்துவிட்டது! 🍗`,
+        play: `விளையாடலாம்! என்னைப் பிடித்துப் பாருங்கள்! 🐾`,
+        api: `Settings-ல் Gemini API key சேர்த்தால் முழுமையான AI நுண்ணறிவு கிடைக்கும்.`,
+        default: `சொல்லுங்கள் ${userName}, என்ன உதவி வேண்டும்? ♡`
+      },
+      hindi: {
+        birthday: `जन्मदिन मुबारक हो ${userName}! 🎂🎉 आज आपका खास दिन है, चलो खुशी से मनाएँ! ♡`,
+        greeting: `नमस्ते ${userName}! मैं बिल्कुल तैयार हूँ। आज क्या करें? ♡`,
+        affection: `धन्यवाद ${userName}! आपका साथी बनकर बहुत खुशी मिलती है। ♡`,
+        success: `बहुत बढ़िया ${userName}! इस शानदार जीत का जश्न मनाएँ! 🤸‍♂️✨`,
+        rest: `थक गए क्या ${userName}? थोड़ा आराम कर लो और पानी पी लो। मैं यहीं हूँ।`,
+        work: `बहुत अच्छी योजना ${userName}। इसे मिलकर पूरा करते हैं! 💻`,
+        sleep: `ठीक है ${userName}, मीठे सपने देखें और आराम करें। 😴`,
+        food: `बहुत धन्यवाद ${userName}! अब पूरी ऊर्जा आ गई! 🍗`,
+        play: `चलो खेलते हैं! पकड़ सको तो पकड़ो! 🐾`,
+        api: `Settings में Gemini API key डालने से पूरी AI सुविधा चालू हो जाएगी।`,
+        default: `बताइए ${userName}, मैं आपकी क्या मदद करूँ? ♡`
+      },
+      english: {
+        birthday: `Happy Birthday ${userName}! 🎂🎉 Today is your special day! Let's celebrate with joy and victory flips! ♡`,
+        greeting: `Hi ${userName}! I'm all set. What shall we work on today? ♡`,
+        affection: `Aww, thank you ${userName}! Being your companion makes me so happy! ♡`,
+        success: `Incredible job, ${userName}! That win deserves a joyful celebration! 🤸‍♂️✨`,
+        rest: `Feeling tired, ${userName}? Take a restful break and drink some water. I'm right here. 🐾`,
+        work: `Great plan, ${userName}! Let's focus and build it step by step. 💻`,
+        sleep: `Rest well, ${userName}. I'll keep quiet guard on your desktop. Zzz... 😴`,
+        food: `Delicious! Thank you ${userName}, I'm full of energy now! 🍗`,
+        play: `Let's play! Try to keep up with my jumps! 🐾`,
+        api: `Save a free Gemini API key in Settings to unlock cloud intelligence.`,
+        default: `Tell me, ${userName}. How can I brighten your day? ♡`
+      }
+    };
+    const languageReplies = replies[language] || replies.tanglish;
+    const reply = `${languageReplies[key] || languageReplies.default} [ACTION:${action}]`;
 
     if (note) {
       reply += `\n\n*(Note: ${note})*`;
